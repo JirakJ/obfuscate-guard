@@ -1,0 +1,6 @@
+<!-- Extension when Java plugin is available -->
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Java-specific inspections and analysis will be registered here -->
+    </extensions>
+</idea-plugin>
