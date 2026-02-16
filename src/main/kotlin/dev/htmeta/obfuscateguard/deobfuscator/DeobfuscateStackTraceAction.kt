@@ -55,12 +55,13 @@ class DeobfuscateDialog(private val project: Project) : DialogWrapper(project) {
         val top = panel {
             group("Mapping File") {
                 row {
+                    val descriptor = com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+                        .createSingleFileNoJarsDescriptor()
+                        .withTitle("Select Mapping File")
+                        .withDescription("Choose the mapping.txt file produced by ProGuard/R8")
                     val browseBtn = com.intellij.openapi.ui.TextFieldWithBrowseButton()
                     browseBtn.addBrowseFolderListener(
-                        "Select Mapping File",
-                        "Choose the mapping.txt file produced by ProGuard/R8",
-                        project,
-                        com.intellij.openapi.fileChooser.FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
+                        com.intellij.openapi.ui.TextBrowseFolderListener(descriptor, project),
                     )
                     browseBtn.addActionListener {
                         val path = browseBtn.text
