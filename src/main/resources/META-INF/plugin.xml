@@ -1,0 +1,119 @@
+<idea-plugin>
+    <id>dev.htmeta.obfuscateguard</id>
+    <name>ObfuscateGuard</name>
+    <vendor email="info@htmeta.dev" url="https://htmeta.dev">Jakub Jirák</vendor>
+
+    <description><![CDATA[
+<h2>ObfuscateGuard — Obfuscation Orchestration for Java/Kotlin</h2>
+<p>ObfuscateGuard is <strong>not</strong> an obfuscator — it's a <strong>workflow, analysis, and governance layer</strong>
+on top of existing obfuscation engines (ProGuard/R8, yGuard, Allatori) directly in your IDE.</p>
+
+<h3>🆓 Free Features</h3>
+<ul>
+    <li><strong>Configuration Wizard</strong> — Set up obfuscation without studying 40-page manuals</li>
+    <li><strong>Project Detection</strong> — Auto-detect build system, project type, and existing obfuscation config</li>
+    <li><strong>Run Configuration</strong> — Run obfuscation with real-time log streaming and progress tracking</li>
+    <li><strong>Tool Window</strong> — Central dashboard for obfuscation status and quick actions</li>
+</ul>
+
+<h3>⭐ Pro Features</h3>
+<ul>
+    <li><strong>Safe-mode Analyzer</strong> — Auto-detect risks (reflection, serialization, JNI, DI) before obfuscation</li>
+    <li><strong>Keep Rules Generator</strong> — Automatic keep rules with traceability and review workflow</li>
+    <li><strong>Dry-run Validation</strong> — Verify obfuscation won't break your app before committing</li>
+    <li><strong>Mapping Vault</strong> — Encrypted storage, diff viewer, and export for crash symbolication</li>
+    <li><strong>CI/CD Export</strong> — Generate headless config and CI templates (GitHub Actions, GitLab CI, Jenkins)</li>
+</ul>
+
+<h3>🏢 Business Features</h3>
+<ul>
+    <li><strong>Policy Engine</strong> — Team-wide obfuscation rules and enforcement</li>
+    <li><strong>Audit Trail</strong> — Full logging of all obfuscation actions</li>
+    <li><strong>Shared Profiles</strong> — VCS-based team configuration sharing</li>
+</ul>
+
+<p><em>By HTMETA.dev — Making obfuscation painless.</em></p>
+]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lang</depends>
+    <depends optional="true" config-file="withJava.xml">com.intellij.java</depends>
+
+    <resource-bundle>messages.ObfuscateGuardBundle</resource-bundle>
+
+    <product-descriptor code="POBFUSCATEGUARD" release-date="20260216" release-version="20261" optional="true"/>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Settings -->
+        <applicationConfigurable
+                id="dev.htmeta.obfuscateguard.settings"
+                parentId="tools"
+                displayName="ObfuscateGuard"
+                instance="dev.htmeta.obfuscateguard.ui.settings.ObfuscateGuardConfigurable"/>
+
+        <applicationService
+                serviceImplementation="dev.htmeta.obfuscateguard.ui.settings.ObfuscateGuardSettings"/>
+
+        <projectService
+                serviceImplementation="dev.htmeta.obfuscateguard.core.ObfuscateGuardProjectService"/>
+
+        <!-- Tool Window -->
+        <toolWindow id="ObfuscateGuard"
+                    anchor="bottom"
+                    factoryClass="dev.htmeta.obfuscateguard.ui.toolwindow.ObfuscateGuardToolWindowFactory"
+                    icon="AllIcons.Actions.Shield"/>
+
+        <!-- Notification -->
+        <notificationGroup id="ObfuscateGuard"
+                           displayType="BALLOON"
+                           key="notification.group.obfuscateguard"/>
+
+        <!-- Run Configuration -->
+        <configurationType implementation="dev.htmeta.obfuscateguard.config.ObfuscateRunConfigurationType"/>
+
+        <!-- Extension Points for SPI -->
+        <extensionPoint name="engineAdapter"
+                        interface="dev.htmeta.obfuscateguard.core.spi.ObfuscationEngineAdapter"
+                        dynamic="true"/>
+
+        <extensionPoint name="analyzerRule"
+                        interface="dev.htmeta.obfuscateguard.core.spi.AnalyzerRule"
+                        dynamic="true"/>
+    </extensions>
+
+    <!-- Register built-in engine adapters and analyzer rules -->
+    <extensions defaultExtensionNs="dev.htmeta.obfuscateguard">
+        <engineAdapter implementation="dev.htmeta.obfuscateguard.engine.proguard.ProGuardAdapter"/>
+
+        <analyzerRule implementation="dev.htmeta.obfuscateguard.analyzer.rules.ReflectionUsageRule"/>
+        <analyzerRule implementation="dev.htmeta.obfuscateguard.analyzer.rules.SerializationRule"/>
+        <analyzerRule implementation="dev.htmeta.obfuscateguard.analyzer.rules.JniRule"/>
+        <analyzerRule implementation="dev.htmeta.obfuscateguard.analyzer.rules.DiFrameworkRule"/>
+        <analyzerRule implementation="dev.htmeta.obfuscateguard.analyzer.rules.DynamicLoadingRule"/>
+    </extensions>
+
+    <actions>
+        <group id="ObfuscateGuard.ToolsMenu" text="ObfuscateGuard" popup="true"
+               icon="AllIcons.Actions.Shield">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+
+            <action id="ObfuscateGuard.ConfigWizard"
+                    class="dev.htmeta.obfuscateguard.ui.wizard.OpenWizardAction"
+                    text="Configure Obfuscation..."
+                    description="Open the ObfuscateGuard configuration wizard"
+                    icon="AllIcons.General.Settings"/>
+
+            <action id="ObfuscateGuard.RunObfuscation"
+                    class="dev.htmeta.obfuscateguard.config.RunObfuscationAction"
+                    text="Run Obfuscation"
+                    description="Run obfuscation with current configuration"
+                    icon="AllIcons.Actions.Execute"/>
+
+            <action id="ObfuscateGuard.AnalyzeRisks"
+                    class="dev.htmeta.obfuscateguard.analyzer.AnalyzeRisksAction"
+                    text="Analyze Obfuscation Risks"
+                    description="Scan project for obfuscation risks"
+                    icon="AllIcons.Actions.Find"/>
+        </group>
+    </actions>
+</idea-plugin>
