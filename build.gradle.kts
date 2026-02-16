@@ -65,7 +65,7 @@ intellijPlatform {
     }
 
     publishing {
-        // ORG_GRADLE_PROJECT_intellijPublishToken
+        token = providers.environmentVariable("PUBLISH_TOKEN")
     }
 }
 

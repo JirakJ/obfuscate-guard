@@ -14,13 +14,18 @@ on top of existing obfuscation engines (ProGuard/R8, yGuard, Allatori) directly 
     <li><strong>Project Detection</strong> — Auto-detect build system, project type, and existing obfuscation config</li>
     <li><strong>Run Configuration</strong> — Run obfuscation with real-time log streaming and progress tracking</li>
     <li><strong>Tool Window</strong> — Central dashboard for obfuscation status and quick actions</li>
+    <li><strong>ProGuard Syntax Highlighting</strong> — Full syntax highlighting for .pro configuration files</li>
 </ul>
 
 <h3>⭐ Pro Features</h3>
 <ul>
     <li><strong>Safe-mode Analyzer</strong> — Auto-detect risks (reflection, serialization, JNI, DI) before obfuscation</li>
+    <li><strong>Inline Inspections</strong> — Obfuscation risk warnings right in the editor with quick-fix actions</li>
+    <li><strong>Gutter Icons</strong> — Visual markers on risky lines (Class.forName, native methods, DI annotations)</li>
+    <li><strong>Quick-Fix: Add Keep Rule</strong> — One-click keep rule generation from any risk warning</li>
+    <li><strong>Dry-Run Validation</strong> — Simulate obfuscation and get a pass/fail verdict before running</li>
+    <li><strong>Stack Trace Deobfuscator</strong> — Paste obfuscated crash logs, get original class/method names</li>
     <li><strong>Keep Rules Generator</strong> — Automatic keep rules with traceability and review workflow</li>
-    <li><strong>Dry-run Validation</strong> — Verify obfuscation won't break your app before committing</li>
     <li><strong>Mapping Vault</strong> — Encrypted storage, diff viewer, and export for crash symbolication</li>
     <li><strong>CI/CD Export</strong> — Generate headless config and CI templates (GitHub Actions, GitLab CI, Jenkins)</li>
 </ul>
@@ -61,7 +66,7 @@ on top of existing obfuscation engines (ProGuard/R8, yGuard, Allatori) directly 
         <toolWindow id="ObfuscateGuard"
                     anchor="bottom"
                     factoryClass="dev.htmeta.obfuscateguard.ui.toolwindow.ObfuscateGuardToolWindowFactory"
-                    icon="AllIcons.Actions.Shield"/>
+                    icon="AllIcons.Actions.Execute"/>
 
         <!-- Notification -->
         <notificationGroup id="ObfuscateGuard"
@@ -70,6 +75,31 @@ on top of existing obfuscation engines (ProGuard/R8, yGuard, Allatori) directly 
 
         <!-- Run Configuration -->
         <configurationType implementation="dev.htmeta.obfuscateguard.config.ObfuscateRunConfigurationType"/>
+
+        <!-- Inspection: inline risk detection with quick-fix -->
+        <localInspection
+                groupName="ObfuscateGuard"
+                shortName="ObfuscationRisk"
+                displayName="Obfuscation risk detection"
+                enabledByDefault="true"
+                level="WARNING"
+                implementationClass="dev.htmeta.obfuscateguard.inspection.ObfuscationRiskInspection"/>
+
+        <!-- Line Markers: gutter icons for obfuscation risks -->
+        <codeInsight.lineMarkerProvider
+                language=""
+                implementationClass="dev.htmeta.obfuscateguard.linemarker.ObfuscationRiskLineMarkerProvider"/>
+
+        <!-- ProGuard file type support -->
+        <fileType
+                name="ProGuard Config"
+                implementationClass="dev.htmeta.obfuscateguard.filetype.ProGuardFileType"
+                fieldName="INSTANCE"
+                extensions="pro"/>
+
+        <syntaxHighlighter
+                factoryClass="dev.htmeta.obfuscateguard.filetype.ProGuardSyntaxHighlighterFactory"
+                filetype="ProGuard Config"/>
 
         <!-- Extension Points for SPI -->
         <extensionPoint name="engineAdapter"
@@ -94,7 +124,7 @@ on top of existing obfuscation engines (ProGuard/R8, yGuard, Allatori) directly 
 
     <actions>
         <group id="ObfuscateGuard.ToolsMenu" text="ObfuscateGuard" popup="true"
-               icon="AllIcons.Actions.Shield">
+               icon="AllIcons.Actions.Execute">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
 
             <action id="ObfuscateGuard.ConfigWizard"
@@ -114,6 +144,24 @@ on top of existing obfuscation engines (ProGuard/R8, yGuard, Allatori) directly 
                     text="Analyze Obfuscation Risks"
                     description="Scan project for obfuscation risks"
                     icon="AllIcons.Actions.Find"/>
+
+            <action id="ObfuscateGuard.DryRun"
+                    class="dev.htmeta.obfuscateguard.dryrun.DryRunValidationAction"
+                    text="Dry-Run Validation"
+                    description="Simulate obfuscation and check for potential breakages"
+                    icon="AllIcons.Actions.Preview"/>
+
+            <action id="ObfuscateGuard.Deobfuscate"
+                    class="dev.htmeta.obfuscateguard.deobfuscator.DeobfuscateStackTraceAction"
+                    text="Deobfuscate Stack Trace..."
+                    description="Translate obfuscated stack traces using mapping files"
+                    icon="AllIcons.Debugger.Console"/>
+
+            <action id="ObfuscateGuard.ExportCI"
+                    class="dev.htmeta.obfuscateguard.ci.ExportCiTemplateAction"
+                    text="Export CI/CD Template..."
+                    description="Generate CI pipeline templates for obfuscation"
+                    icon="AllIcons.Vcs.Vendors.Github"/>
         </group>
     </actions>
 </idea-plugin>
