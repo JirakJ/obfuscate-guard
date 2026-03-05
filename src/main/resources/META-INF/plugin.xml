@@ -123,6 +123,9 @@
         <extensionPoint name="analyzerRule"
                         interface="dev.htmeta.obfuscateguard.core.spi.AnalyzerRule"
                         dynamic="true"/>
+    
+        <notificationGroup id="ObfuscateGuard Feedback" displayType="BALLOON"/>
+        <projectActivity implementation="dev.htmeta.obfuscateguard.feedback.FeedbackNotifier"/>
     </extensions>
 
     <!-- Register built-in engine adapters and analyzer rules -->
