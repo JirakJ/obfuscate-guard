@@ -36,9 +36,9 @@
 <h3>Team and CI/CD</h3>
 <ul>
   <li><b>CI/CD Export</b> — Generate pipeline templates for GitHub Actions, GitLab CI, and Jenkins</li>
-  <li><b>Policy Engine</b> — Team-wide obfuscation rules and enforcement (Business tier)</li>
-  <li><b>Audit Trail</b> — Full logging of all obfuscation actions (Business tier)</li>
-  <li><b>Shared Profiles</b> — VCS-based team configuration sharing (Business tier)</li>
+  <li><b>Policy Engine</b> — Team-wide obfuscation rules and enforcement</li>
+  <li><b>Audit Trail</b> — Full logging of all obfuscation actions</li>
+  <li><b>Shared Profiles</b> — VCS-based team configuration sharing</li>
 </ul>
 
 <h3>Requirements</h3>
@@ -59,8 +59,6 @@
     <depends optional="true" config-file="withJava.xml">com.intellij.java</depends>
 
     <resource-bundle>messages.ObfuscateGuardBundle</resource-bundle>
-
-    <product-descriptor code="POBFUSCATEGUARD" release-date="20260227" release-version="20262" optional="true"/>
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- Settings -->
