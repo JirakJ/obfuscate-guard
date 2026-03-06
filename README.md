@@ -11,7 +11,7 @@
 - **Dry-run Validation** — ověření, že obfuskace nerozbije aplikaci
 - **Mapping Management** — šifrovaný vault, diff, export pro crash symbolication
 - **CI/CD Export** — generování headless konfigurace a CI šablon
-- **Policy Engine** — týmová pravidla pro obfuskaci (Business tier)
+- **Policy Engine** — týmová pravidla pro obfuskaci
 
 ## Dokumentace
 
