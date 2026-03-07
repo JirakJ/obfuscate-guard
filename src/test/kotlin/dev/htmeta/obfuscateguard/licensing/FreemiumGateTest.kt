@@ -11,8 +11,8 @@ import org.junit.Test
 class FreemiumGateTest {
 
     @Test
-    fun `product code is POBFUSCGUARD`() {
-        assertEquals("POBFUSCGUARD", FreemiumGate.PRODUCT_CODE)
+    fun `product code is POBFUSCATEGUARD`() {
+        assertEquals("POBFUSCATEGUARD", FreemiumGate.PRODUCT_CODE)
     }
 
     @Test
