@@ -54,6 +54,8 @@
   <li>Email: support@jakubjirak.com</li>
 </ul>]]></description>
 
+    <product-descriptor code="POBFUSCGUARD" release-date="20260307" release-version="20263" optional="true"/>
+
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.lang</depends>
     <depends optional="true" config-file="withJava.xml">com.intellij.java</depends>
@@ -70,6 +72,9 @@
 
         <applicationService
                 serviceImplementation="dev.htmeta.obfuscateguard.ui.settings.ObfuscateGuardSettings"/>
+
+        <applicationService
+                serviceImplementation="dev.htmeta.obfuscateguard.licensing.FreemiumGate"/>
 
         <projectService
                 serviceImplementation="dev.htmeta.obfuscateguard.core.ObfuscateGuardProjectService"/>
