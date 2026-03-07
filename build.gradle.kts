@@ -65,7 +65,7 @@ intellijPlatform {
     }
 
     publishing {
-        token = providers.environmentVariable("PUBLISH_TOKEN")
+        token.set(System.getenv("PLUGIN_TOKEN"))
     }
 }
 
