@@ -14,7 +14,7 @@ class FreemiumGate {
     enum class LicenseStatus { FREE, TRIAL, PAID }
 
     companion object {
-        const val PRODUCT_CODE = "POBFUSCGUARD"
+        const val PRODUCT_CODE = "POBFUSCATEGUARD"
 
         const val FEATURE_DEOBFUSCATOR = "deobfuscator"
         const val FEATURE_MAPPING_VAULT = "mapping_vault"
