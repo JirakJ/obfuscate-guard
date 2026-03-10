@@ -110,13 +110,18 @@
         <!-- ProGuard file type support -->
         <fileType
                 name="ProGuard Config"
+                language="ProGuard"
                 implementationClass="dev.htmeta.obfuscateguard.filetype.ProGuardFileType"
                 fieldName="INSTANCE"
                 extensions="pro"/>
 
-        <syntaxHighlighter
-                factoryClass="dev.htmeta.obfuscateguard.filetype.ProGuardSyntaxHighlighterFactory"
-                filetype="ProGuard Config"/>
+        <lang.parserDefinition
+                language="ProGuard"
+                implementationClass="dev.htmeta.obfuscateguard.filetype.ProGuardParserDefinition"/>
+
+        <lang.syntaxHighlighter
+                language="ProGuard"
+                implementationClass="dev.htmeta.obfuscateguard.filetype.ProGuardSyntaxHighlighter"/>
 
         <!-- Extension Points for SPI -->
         <extensionPoint name="engineAdapter"
