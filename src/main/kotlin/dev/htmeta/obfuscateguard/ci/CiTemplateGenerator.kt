@@ -90,7 +90,7 @@ object CiTemplateGenerator {
     """.trimMargin()
 
     private fun getGradleCommand(config: EngineSpecificConfig): String = when (config.engineType) {
-        EngineType.PROGUARD -> "./gradlew assembleRelease -Pandroid.enableR8=true"
+        EngineType.PROGUARD -> "./gradlew assembleRelease"
         EngineType.YGUARD -> "./gradlew yguardObfuscate"
         EngineType.ALLATORI -> "./gradlew allatoriObfuscate"
     }

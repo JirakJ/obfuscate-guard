@@ -52,8 +52,9 @@ class OverviewPanel(private val project: Project) : JPanel(BorderLayout()) {
                         refreshStatus()
                     }
                     button("Analyze Risks") {
-                        val results = service.analyzeRisks()
-                        statusLabel.text = "Analysis: ${results.size} risks found"
+                        runAnalysisInBackground(project) { results ->
+                            statusLabel.text = "Analysis: ${results.size} risks found"
+                        }
                     }
                 }
             }
@@ -109,12 +110,11 @@ class AnalysisPanel(private val project: Project) : JPanel(BorderLayout()) {
     }
 
     private fun runAnalysis() {
-        val service = ObfuscateGuardProjectService.getInstance(project)
-        val results = service.analyzeRisks()
-        updateTable(results)
+        countLabel.text = "Analyzing..."
+        runAnalysisInBackground(project) { results -> updateTable(results) }
     }
 
-    private fun updateTable(results: List<RiskItem>) {
+    internal fun updateTable(results: List<RiskItem>) {
         tableModel.rowCount = 0
         results.forEach { risk ->
             tableModel.addRow(
@@ -142,8 +142,21 @@ class AnalysisPanel(private val project: Project) : JPanel(BorderLayout()) {
             return
         }
 
-        val config = service.config ?: return
+        val config = service.config ?: dev.htmeta.obfuscateguard.core.model.ObfuscationConfig()
         service.updateConfig(config.copy(keepRules = rules))
-        countLabel.text = "Generated ${rules.size} keep rules. Re-run wizard to apply."
+        countLabel.text = "Generated ${rules.size} keep rules. Use Tools > ObfuscateGuard > Export Keep Rules to write them."
     }
+}
+
+internal fun runAnalysisInBackground(project: Project, onDone: (List<RiskItem>) -> Unit) {
+    com.intellij.openapi.progress.ProgressManager.getInstance().run(
+        object : com.intellij.openapi.progress.Task.Backgroundable(project, "ObfuscateGuard: Analyzing risks...", true) {
+            private var results: List<RiskItem> = emptyList()
+            override fun run(indicator: com.intellij.openapi.progress.ProgressIndicator) {
+                indicator.isIndeterminate = true
+                results = ObfuscateGuardProjectService.getInstance(project).analyzeRisks()
+            }
+            override fun onSuccess() = onDone(results)
+        }
+    )
 }

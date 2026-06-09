@@ -2,13 +2,14 @@ package dev.htmeta.obfuscateguard.deobfuscator
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.dsl.builder.*
-import dev.htmeta.obfuscateguard.core.spi.ObfuscationEngineAdapter
-import dev.htmeta.obfuscateguard.core.spi.MappingEntryType
-import dev.htmeta.obfuscateguard.core.model.EngineType
 import java.awt.BorderLayout
+import java.awt.datatransfer.StringSelection
+import java.io.File
+import javax.swing.Action
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JTextArea
@@ -31,45 +32,42 @@ class DeobfuscateStackTraceAction : AnAction() {
 
 class DeobfuscateDialog(private val project: Project) : DialogWrapper(project) {
 
-    private val inputArea = JTextArea(15, 80).apply {
+    private val inputArea = JTextArea(12, 80).apply {
         lineWrap = true
         wrapStyleWord = true
         toolTipText = "Paste obfuscated stack trace here"
     }
-    private val outputArea = JTextArea(15, 80).apply {
+    private val outputArea = JTextArea(12, 80).apply {
         lineWrap = true
         wrapStyleWord = true
         isEditable = false
     }
-    private var mappingContent: String = ""
+    private val mappingField = com.intellij.openapi.ui.TextFieldWithBrowseButton()
 
     init {
         title = "Deobfuscate Stack Trace — ObfuscateGuard"
         setOKButtonText("Deobfuscate")
+        // Pre-fill with a mapping file found in the project, if any
+        findMappingFileInProject()?.let { mappingField.text = it.absolutePath }
         init()
     }
 
     override fun createCenterPanel(): JComponent {
         val mainPanel = JPanel(BorderLayout())
 
+        val descriptor = com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+            .createSingleFileNoJarsDescriptor()
+            .withTitle("Select Mapping File")
+            .withDescription("Choose the mapping.txt file produced by ProGuard/R8")
+        mappingField.addBrowseFolderListener(
+            com.intellij.openapi.ui.TextBrowseFolderListener(descriptor, project),
+        )
+
         val top = panel {
             group("Mapping File") {
                 row {
-                    val descriptor = com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-                        .createSingleFileNoJarsDescriptor()
-                        .withTitle("Select Mapping File")
-                        .withDescription("Choose the mapping.txt file produced by ProGuard/R8")
-                    val browseBtn = com.intellij.openapi.ui.TextFieldWithBrowseButton()
-                    browseBtn.addBrowseFolderListener(
-                        com.intellij.openapi.ui.TextBrowseFolderListener(descriptor, project),
-                    )
-                    browseBtn.addActionListener {
-                        val path = browseBtn.text
-                        if (path.isNotBlank()) {
-                            mappingContent = try { java.io.File(path).readText() } catch (_: Exception) { "" }
-                        }
-                    }
-                    cell(browseBtn).align(Align.FILL).resizableColumn()
+                    cell(mappingField).align(Align.FILL).resizableColumn()
+                        .comment("Auto-detected from the project when possible")
                 }
             }
             group("Obfuscated Stack Trace") {
@@ -81,6 +79,11 @@ class DeobfuscateDialog(private val project: Project) : DialogWrapper(project) {
                 row {
                     scrollCell(outputArea).align(Align.FILL).resizableColumn()
                 }.resizableRow()
+                row {
+                    button("Copy Result") {
+                        CopyPasteManager.getInstance().setContents(StringSelection(outputArea.text))
+                    }
+                }
             }
         }
 
@@ -88,9 +91,18 @@ class DeobfuscateDialog(private val project: Project) : DialogWrapper(project) {
         return mainPanel
     }
 
+    // Keep the dialog open after "Deobfuscate" so users can iterate
     override fun doOKAction() {
-        if (mappingContent.isBlank()) {
+        val mappingPath = mappingField.text.trim()
+        if (mappingPath.isBlank()) {
             outputArea.text = "Please select a mapping file first."
+            return
+        }
+
+        val mappingContent = try {
+            File(mappingPath).readText()
+        } catch (e: Exception) {
+            outputArea.text = "Cannot read mapping file: ${e.message}"
             return
         }
 
@@ -100,65 +112,20 @@ class DeobfuscateDialog(private val project: Project) : DialogWrapper(project) {
             return
         }
 
-        val deobfuscated = deobfuscate(input, mappingContent)
-        outputArea.text = deobfuscated
+        outputArea.text = StackTraceDeobfuscator.deobfuscate(input, mappingContent)
     }
 
-    companion object {
-        fun deobfuscate(stackTrace: String, mappingContent: String): String {
-            val adapter = ObfuscationEngineAdapter.findAdapter(EngineType.PROGUARD)
-                ?: return "ProGuard adapter not found"
+    override fun createActions(): Array<Action> = arrayOf(okAction, cancelAction)
 
-            val entries = adapter.parseMapping(mappingContent)
-            if (entries.isEmpty()) return "No mapping entries found in the file"
-
-            val classMap = mutableMapOf<String, String>()
-            val memberMap = mutableMapOf<String, String>()
-
-            for (entry in entries) {
-                when (entry.type) {
-                    MappingEntryType.CLASS -> classMap[entry.obfuscatedName] = entry.originalName
-                    else -> memberMap[entry.obfuscatedName] = entry.originalName
-                }
-            }
-
-            return stackTrace.lines().joinToString("\n") { line ->
-                deobfuscateLine(line, classMap, memberMap)
-            }
-        }
-
-        private fun deobfuscateLine(
-            line: String,
-            classMap: Map<String, String>,
-            memberMap: Map<String, String>,
-        ): String {
-            val atPattern = Regex("""(\s+at\s+)([\w.$]+)\.([\w$]+)\(([^)]*)\)""")
-            val match = atPattern.find(line) ?: return resolveClassNames(line, classMap)
-
-            val prefix = match.groupValues[1]
-            val className = match.groupValues[2]
-            val methodName = match.groupValues[3]
-            val location = match.groupValues[4]
-
-            val originalClass = classMap[className] ?: className
-            val memberKey = "$className.$methodName"
-            val originalMethod = memberMap[memberKey]?.substringAfterLast(".") ?: methodName
-
-            val sourceFile = originalClass.substringAfterLast(".") + ".java"
-            val lineNum = Regex(""":(\d+)""").find(location)?.groupValues?.get(1) ?: ""
-            val newLocation = if (lineNum.isNotEmpty()) "$sourceFile:$lineNum" else sourceFile
-
-            return "$prefix$originalClass.$originalMethod($newLocation)"
-        }
-
-        private fun resolveClassNames(line: String, classMap: Map<String, String>): String {
-            var result = line
-            for ((obf, orig) in classMap) {
-                if (result.contains(obf)) {
-                    result = result.replace(obf, orig)
-                }
-            }
-            return result
-        }
+    private fun findMappingFileInProject(): File? {
+        val basePath = project.basePath ?: return null
+        val candidates = listOf(
+            "app/build/outputs/mapping/release/mapping.txt",
+            "build/outputs/mapping/release/mapping.txt",
+            "app/build/outputs/mapping/debug/mapping.txt",
+            "build/outputs/mapping/debug/mapping.txt",
+            "mapping.txt",
+        )
+        return candidates.map { File(basePath, it) }.firstOrNull { it.isFile }
     }
 }
