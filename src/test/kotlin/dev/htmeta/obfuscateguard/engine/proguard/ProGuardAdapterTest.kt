@@ -75,6 +75,34 @@ class ProGuardAdapterTest {
     }
 
     @Test
+    fun `parseMapping strips R8 line-range prefixes from method entries`() {
+        val mapping = """
+            com.example.MyClass -> a.b.c:
+                12:34:void doStuff(int) -> a
+        """.trimIndent()
+        val entries = adapter.parseMapping(mapping)
+        val method = entries.find { it.type == MappingEntryType.METHOD }!!
+        assertEquals("com.example.MyClass.void doStuff(int)", method.originalName)
+        assertEquals("a.b.c.a", method.obfuscatedName)
+    }
+
+    @Test
+    fun `parseMapping qualifies obfuscated members with the obfuscated class name`() {
+        val mapping = """
+            com.example.MyClass -> a.b.c:
+                void doStuff(int) -> a
+                int myField -> d
+        """.trimIndent()
+        val entries = adapter.parseMapping(mapping)
+        val method = entries.find { it.type == MappingEntryType.METHOD }!!
+        val field = entries.find { it.type == MappingEntryType.FIELD }!!
+        // Stack traces reference members through the OBFUSCATED class name
+        assertEquals("a.b.c.a", method.obfuscatedName)
+        assertEquals("a.b.c.d", field.obfuscatedName)
+        assertEquals("com.example.MyClass.int myField", field.originalName)
+    }
+
+    @Test
     fun `parseMapping returns empty list for empty input`() {
         val entries = adapter.parseMapping("")
         assertTrue(entries.isEmpty())

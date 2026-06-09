@@ -9,6 +9,7 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import dev.htmeta.obfuscateguard.core.ObfuscateGuardProjectService
 import dev.htmeta.obfuscateguard.core.model.RiskSeverity
+import dev.htmeta.obfuscateguard.policy.PolicyEngine
 
 /**
  * Dry-run validation — simulate obfuscation and report what would break.
@@ -69,6 +70,14 @@ class DryRunValidationAction : AnAction() {
                 val warningRisks = uncoveredRisks.count { it.severity == RiskSeverity.WARNING }
                 val coveredCount = risks.size - uncoveredRisks.size
 
+                indicator.text = "Checking team policy..."
+                val policy = project.basePath?.let { PolicyEngine.loadPolicy(it) }
+                val policyViolations = if (policy != null && engineConfig != null) {
+                    PolicyEngine.validate(policy, config, engineConfig.configContent, criticalRisks)
+                } else {
+                    emptyList()
+                }
+
                 val sb = StringBuilder()
                 sb.appendLine("Dry-Run Validation Report")
                 sb.appendLine("Engine: ${config.engine.displayName} | Level: ${config.level.displayName} | Keep rules: ${config.keepRules.size}")
@@ -77,6 +86,15 @@ class DryRunValidationAction : AnAction() {
 
                 if (configIssues.isNotEmpty()) {
                     sb.appendLine("Config issues: ${configIssues.joinToString("; ")}")
+                }
+
+                if (policy != null) {
+                    sb.appendLine()
+                    sb.appendLine(
+                        if (policyViolations.isEmpty()) "Team policy: compliant"
+                        else "Team policy: ${policyViolations.size} violation(s)"
+                    )
+                    policyViolations.forEach { sb.appendLine("  ✖ [${it.rule}] ${it.message}") }
                 }
 
                 if (uncoveredRisks.isNotEmpty()) {
@@ -88,6 +106,7 @@ class DryRunValidationAction : AnAction() {
                 }
 
                 val verdict = when {
+                    policyViolations.isNotEmpty() -> "FAIL - ${policyViolations.size} team policy violation(s)"
                     criticalRisks > 0 -> "FAIL - $criticalRisks critical risks without keep rules"
                     warningRisks > 3 -> "WARN - $warningRisks uncovered warnings"
                     configIssues.isNotEmpty() -> "WARN - Configuration issues detected"
@@ -99,6 +118,7 @@ class DryRunValidationAction : AnAction() {
                 indicator.fraction = 1.0
 
                 val notificationType = when {
+                    policyViolations.isNotEmpty() -> NotificationType.ERROR
                     criticalRisks > 0 -> NotificationType.ERROR
                     warningRisks > 3 || configIssues.isNotEmpty() -> NotificationType.WARNING
                     else -> NotificationType.INFORMATION

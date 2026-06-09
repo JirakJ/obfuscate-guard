@@ -208,7 +208,12 @@ class ObfuscationWizardDialog(private val project: Project) : DialogWrapper(proj
         if (basePath.isBlank()) return
         val configFile = java.io.File(basePath, config.configFilePath ?: "proguard-rules.pro")
         try {
+            // Never destroy a hand-written config silently
+            if (configFile.exists()) {
+                configFile.copyTo(java.io.File(configFile.path + ".bak"), overwrite = true)
+            }
             configFile.writeText(config.configContent)
+            com.intellij.openapi.vfs.LocalFileSystem.getInstance().refreshIoFiles(listOf(configFile))
         } catch (e: Exception) {
             com.intellij.openapi.diagnostic.Logger.getInstance(javaClass).warn("Failed to write config", e)
         }

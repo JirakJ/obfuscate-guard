@@ -1,5 +1,59 @@
 # ObfuscateGuard — Changelog
 
+## [2026.4.0] - 2026-06-09 🚀 Feature Release
+
+### Added
+- **Code completion in .pro files** — 50+ ProGuard/R8 directives with argument
+  hints and inline documentation, backed by a new directive registry.
+- **Quick documentation (Ctrl+Q)** — hover docs for every known directive,
+  including warnings for dangerous options.
+- **Config Linter** — annotates unknown directives (with "did you mean"
+  typo suggestions via edit distance), dangerous directives
+  (`-dontobfuscate`, `-ignorewarnings`, broad `-dontwarn`), and duplicate
+  singleton directives directly in the editor. Includes release-readiness
+  checks (missing `-printmapping`, missing `LineNumberTable`).
+- **Policy Engine** — team rules in a VCS-shared `obfuscateguard-policy.json`
+  (minimum level, required keep attributes, forbidden directives, max
+  uncovered critical risks). Dry-Run Validation loads and enforces the policy;
+  violations turn the verdict to FAIL.
+- **Export Keep Rules action** — writes generated keep rules into
+  `proguard-rules.pro` between markers, preserving hand-written content and
+  replacing the generated block idempotently on re-export.
+- **Persistent Mapping Vault** — mapping records are stored in `index.json`
+  and survive IDE restarts; added `deleteMapping`.
+- **Screenshot pipeline** — marketplace/README screenshots are rendered from
+  the real plugin UI by `ScreenshotGeneratorTest` (opt-in via
+  `-PscreenshotsDir`).
+
+### Fixed
+- **Stack Trace Deobfuscator never translated method names** — the member
+  lookup used original-class keys while stack frames carry obfuscated class
+  names. Members are now indexed by `obfuscatedClass.obfuscatedMember`.
+- **R8 line-range mapping entries** (`12:34:void run() -> a`) were not parsed;
+  the prefix is now stripped.
+- **Method-name extraction broke on signatures with dotted argument types**
+  (`void handle(java.lang.String)`).
+- **Exception-message class replacement could corrupt unrelated identifiers**
+  — replacement now matches whole identifiers only.
+- **Deobfuscator UX** — mapping file is auto-detected from common build output
+  paths, the result can be copied with one click, and the dialog stays open
+  for iterative use.
+- **Risk analysis froze the UI** when triggered from the tool window — it now
+  runs as a background task.
+- **Wizard overwrote an existing `proguard-rules.pro` silently** — a `.bak`
+  backup is created and the VFS is refreshed.
+- **Generate Keep Rules did nothing without prior configuration** — a default
+  config is created on demand.
+- **CI templates emitted the obsolete `-Pandroid.enableR8=true` flag**
+  (removed in AGP 7).
+
+### Technical
+- Added IntelliJ Platform test framework + JUnit Vintage for UI-level tests.
+- Test suite grew from 53 to 103 tests; all new logic is in pure, fully
+  unit-tested objects (`StackTraceDeobfuscator`, `ProGuardDirectives`,
+  `ProGuardConfigLinter`, `PolicyEngine`, `KeepRulesExporter`,
+  `MappingManager`).
+
 ## [2026.3.7] - 2026-03-10 🐛 Bug Fix
 
 ### Fixed

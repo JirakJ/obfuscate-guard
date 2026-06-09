@@ -14,7 +14,8 @@
 <h3>Setup and Configuration</h3>
 <ul>
   <li><b>Configuration Wizard</b> — Guided setup with auto-detection of build system and project type</li>
-  <li><b>ProGuard Syntax Highlighting</b> — Full editor support for .pro configuration files</li>
+  <li><b>Smart .pro Editor</b> — Syntax highlighting, code completion, and quick documentation for 50+ ProGuard/R8 directives</li>
+  <li><b>Config Linter</b> — Detects unknown directives (with typo suggestions), dangerous options, and duplicates right in the editor</li>
   <li><b>Run Configuration</b> — Execute obfuscation with real-time log streaming and progress tracking</li>
 </ul>
 
@@ -28,17 +29,15 @@
 
 <h3>Mapping and Debugging</h3>
 <ul>
-  <li><b>Stack Trace Deobfuscator</b> — Paste obfuscated crash logs, get original class and method names</li>
-  <li><b>Mapping Vault</b> — Encrypted storage with diff viewer and export for crash symbolication</li>
-  <li><b>Keep Rules Generator</b> — Automatic keep rules with traceability and review workflow</li>
+  <li><b>Stack Trace Deobfuscator</b> — Paste obfuscated crash logs, get original class and method names (R8 line ranges supported, mapping file auto-detected)</li>
+  <li><b>Mapping Vault</b> — Persistent local storage with diff viewer and build metadata for crash symbolication</li>
+  <li><b>Keep Rules Generator</b> — Automatic keep rules with one-click export into proguard-rules.pro that preserves hand-written content</li>
 </ul>
 
 <h3>Team and CI/CD</h3>
 <ul>
   <li><b>CI/CD Export</b> — Generate pipeline templates for GitHub Actions, GitLab CI, and Jenkins</li>
-  <li><b>Policy Engine</b> — Team-wide obfuscation rules and enforcement</li>
-  <li><b>Audit Trail</b> — Full logging of all obfuscation actions</li>
-  <li><b>Shared Profiles</b> — VCS-based team configuration sharing</li>
+  <li><b>Policy Engine</b> — Team-wide rules in a VCS-shared obfuscateguard-policy.json, enforced by dry-run validation</li>
 </ul>
 
 <h3>Requirements</h3>
@@ -54,7 +53,7 @@
   <li>Email: support@jakubjirak.com</li>
 </ul>]]></description>
 
-    <product-descriptor code="POBFUSCATEGUARD" release-date="20260307" release-version="20263" optional="true"/>
+    <product-descriptor code="POBFUSCATEGUARD" release-date="20260609" release-version="20264" optional="true"/>
 
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.lang</depends>
@@ -123,6 +122,18 @@
                 language="ProGuard"
                 implementationClass="dev.htmeta.obfuscateguard.filetype.ProGuardSyntaxHighlighter"/>
 
+        <completion.contributor
+                language="ProGuard"
+                implementationClass="dev.htmeta.obfuscateguard.filetype.ProGuardCompletionContributor"/>
+
+        <lang.documentationProvider
+                language="ProGuard"
+                implementationClass="dev.htmeta.obfuscateguard.filetype.ProGuardDocumentationProvider"/>
+
+        <annotator
+                language="ProGuard"
+                implementationClass="dev.htmeta.obfuscateguard.filetype.ProGuardLintAnnotator"/>
+
         <!-- Extension Points for SPI -->
         <extensionPoint name="engineAdapter"
                         interface="dev.htmeta.obfuscateguard.core.spi.ObfuscationEngineAdapter"
@@ -176,6 +187,12 @@
                     description="Simulate obfuscation and check for potential breakages"
                     icon="AllIcons.Actions.Preview"/>
 
+            <action id="ObfuscateGuard.ExportKeepRules"
+                    class="dev.htmeta.obfuscateguard.keeprules.ExportKeepRulesAction"
+                    text="Export Keep Rules"
+                    description="Write generated keep rules into proguard-rules.pro, preserving hand-written content"
+                    icon="AllIcons.Actions.MenuSaveall"/>
+
             <action id="ObfuscateGuard.Deobfuscate"
                     class="dev.htmeta.obfuscateguard.deobfuscator.DeobfuscateStackTraceAction"
                     text="Deobfuscate Stack Trace..."
@@ -191,18 +208,18 @@
     </actions>
 
     <change-notes><![CDATA[
-        <h3>What's New</h3>
+        <h3>2026.4.0</h3>
         <ul>
-            <li><b>Configuration Wizard</b> - Set up ProGuard, R8, yGuard, or Allatori obfuscation with a guided step-by-step wizard</li>
-            <li><b>Safe-Mode Risk Analyzer</b> - Automatically detect reflection, serialization, JNI, and dependency injection risks before obfuscation</li>
-            <li><b>Inline Inspections and Gutter Icons</b> - See obfuscation risk warnings directly in the editor with one-click quick fixes</li>
-            <li><b>Dry-Run Validation</b> - Simulate obfuscation to get a pass/fail verdict without actually running it</li>
-            <li><b>Stack Trace Deobfuscator</b> - Paste obfuscated crash logs and get back original class and method names</li>
-            <li><b>Mapping Vault</b> - Encrypted storage with diff viewer and export for crash symbolication mapping files</li>
-            <li><b>CI/CD Export</b> - Generate pipeline templates for GitHub Actions, GitLab CI, and Jenkins</li>
-            <li><b>Keep Rules Generator</b> - Automatic keep rule generation with traceability and review workflow</li>
-            <li><b>ProGuard Syntax Highlighting</b> - Full syntax highlighting and editor support for .pro configuration files</li>
-            <li><b>Policy Engine</b> - Define and enforce team-wide obfuscation rules across projects</li>
+            <li><b>NEW: Code completion in .pro files</b> - 50+ ProGuard/R8 directives with inline documentation</li>
+            <li><b>NEW: Quick documentation</b> - Press Ctrl+Q on any directive to see what it does and when it is dangerous</li>
+            <li><b>NEW: Config linter</b> - Unknown directives with "did you mean" typo suggestions, dangerous options (-dontobfuscate, -ignorewarnings, broad -dontwarn), and duplicate directives flagged in the editor</li>
+            <li><b>NEW: Policy Engine</b> - Define team rules in obfuscateguard-policy.json (min level, required attributes, forbidden directives); dry-run validation enforces them</li>
+            <li><b>NEW: Export Keep Rules action</b> - Writes generated keep rules into proguard-rules.pro between markers, preserving your hand-written content</li>
+            <li><b>NEW: Persistent Mapping Vault</b> - Stored mappings now survive IDE restarts</li>
+            <li><b>FIX: Stack Trace Deobfuscator</b> - Method names are now correctly translated; R8 line-range mapping entries (12:34:void run() -> a) are parsed; mapping file is auto-detected from the project; result can be copied with one click</li>
+            <li><b>FIX: Risk analysis no longer freezes the UI</b> - Tool window analysis runs in the background</li>
+            <li><b>FIX: Wizard backs up an existing proguard-rules.pro</b> to .bak before overwriting</li>
+            <li><b>FIX: CI templates</b> - Removed the obsolete android.enableR8 Gradle flag</li>
         </ul>
     ]]></change-notes>
 </idea-plugin>

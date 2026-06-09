@@ -43,7 +43,8 @@ class CiTemplateGeneratorTest {
     fun `generateGitHubActions uses correct gradle command for ProGuard`() {
         val yaml = CiTemplateGenerator.generateGitHubActions(proguardConfig)
         assertTrue(yaml.contains("assembleRelease"))
-        assertTrue(yaml.contains("enableR8=true"))
+        // The android.enableR8 flag is obsolete (removed in AGP 7) and must not be emitted
+        assertFalse(yaml.contains("enableR8"))
     }
 
     @Test

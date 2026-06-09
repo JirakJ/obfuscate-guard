@@ -143,6 +143,7 @@ class ProGuardAdapter : ObfuscationEngineAdapter {
     override fun parseMapping(mappingContent: String): List<MappingEntry> {
         val entries = mutableListOf<MappingEntry>()
         var currentClass: String? = null
+        var currentObfuscatedClass: String? = null
 
         for (line in mappingContent.lines()) {
             if (line.isBlank() || line.startsWith("#")) continue
@@ -151,16 +152,22 @@ class ProGuardAdapter : ObfuscationEngineAdapter {
                 val parts = line.removeSuffix(":").split(" -> ")
                 if (parts.size == 2) {
                     currentClass = parts[0].trim()
-                    entries.add(MappingEntry(currentClass, parts[1].trim(), MappingEntryType.CLASS))
+                    currentObfuscatedClass = parts[1].trim()
+                    entries.add(MappingEntry(currentClass, currentObfuscatedClass, MappingEntryType.CLASS))
                 }
-            } else if (line.startsWith("    ") && line.contains(" -> ") && currentClass != null) {
+            } else if (line.startsWith(" ") && line.contains(" -> ") && currentClass != null) {
                 val trimmed = line.trim()
                 val parts = trimmed.split(" -> ")
                 if (parts.size == 2) {
-                    val original = parts[0].trim()
+                    // Method lines carry optional line-range prefixes: "12:34:void run() -> a"
+                    val original = LINE_RANGE_PREFIX.replace(parts[0].trim(), "")
                     val obfuscated = parts[1].trim()
                     val type = if (original.contains("(")) MappingEntryType.METHOD else MappingEntryType.FIELD
-                    entries.add(MappingEntry("$currentClass.$original", "$currentClass.$obfuscated", type))
+                    // Obfuscated members live in the obfuscated class — qualify accordingly,
+                    // so stack-trace lookups by "obfClass.obfMember" can resolve them.
+                    entries.add(
+                        MappingEntry("$currentClass.$original", "$currentObfuscatedClass.$obfuscated", type)
+                    )
                 }
             }
         }
@@ -178,5 +185,6 @@ class ProGuardAdapter : ObfuscationEngineAdapter {
 
     companion object {
         private val LOG = Logger.getInstance(ProGuardAdapter::class.java)
+        private val LINE_RANGE_PREFIX = Regex("""^\d+:\d+:""")
     }
 }
