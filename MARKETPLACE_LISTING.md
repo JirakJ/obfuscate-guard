@@ -8,7 +8,7 @@
 |-------------|----------------------------------------|
 | **Name**    | ObfuscateGuard                         |
 | **Plugin ID** | `dev.htmeta.obfuscateguard`         |
-| **Version** | 2026.1.2                               |
+| **Version** | 2026.4.0                               |
 | **Category** | Build & Deployment / Security         |
 | **Tags**    | Obfuscation, ProGuard, R8, Java Security, Code Protection |
 
@@ -38,7 +38,8 @@
 - 🔎 **Project Detection** — Automatic detection of your obfuscation tool and setup
 - ▶️ **Run Configuration** — Integrated obfuscation run configurations
 - 🪟 **Tool Window** — Dedicated ObfuscateGuard panel for orchestration
-- 🎨 **ProGuard Syntax Highlighting** — First-class editor support for `.pro` and ProGuard config files
+- 🎨 **Smart .pro Editor** — Syntax highlighting, code completion, and quick documentation (Ctrl+Q) for 50+ ProGuard/R8 directives
+- 🧹 **Config Linter** — Unknown directives with typo suggestions, dangerous options, and duplicates flagged in the editor
 
 #### ⭐ Pro Tier — €89/year
 
@@ -47,16 +48,14 @@
 - 🔖 **Gutter Icons** — Visual indicators for classes/methods affected by obfuscation
 - 🔧 **Quick-Fix Actions** — One-click fixes for detected obfuscation risks
 - 🧪 **Dry-Run Validation** — Verify obfuscation won't break your application before running
-- 🗺️ **Stack Trace Deobfuscator** — Translate obfuscated crash logs back to readable code
-- 📏 **Keep Rules Generator** — AI-assisted generation of keep rules from risk analysis
-- 🔒 **Mapping Vault** — Encrypted storage, diff, and export of mapping files
+- 🗺️ **Stack Trace Deobfuscator** — Translate obfuscated crash logs back to readable code (R8 line ranges, auto-detected mapping)
+- 📏 **Keep Rules Generator** — Keep rules from risk analysis with one-click export into proguard-rules.pro
+- 🔒 **Mapping Vault** — Persistent storage, diff, and export of mapping files
 - 📤 **CI/CD Export** — Generate headless obfuscation configs and CI pipeline templates
 
 #### 🏢 Business Tier — €279/year
 
-- 📋 **Policy Engine** — Team-wide obfuscation rules and compliance policies
-- 📊 **Audit Trail** — Complete history of obfuscation configuration changes
-- 👥 **Shared Profiles** — Team-shared obfuscation configurations and profiles
+- 📋 **Policy Engine** — Team-wide rules in a VCS-shared `obfuscateguard-policy.json`, enforced by dry-run validation
 
 ---
 
@@ -102,14 +101,13 @@
 
 ## 📸 Screenshots & Media
 
-1. **Configuration Wizard** — Step-by-step obfuscation setup dialog with guided options
-2. **Tool Window** — ObfuscateGuard panel showing project obfuscation status
-3. **ProGuard Syntax Highlighting** — Editor with colored ProGuard/R8 configuration rules
-4. **Safe-mode Analyzer (Pro)** — Risk detection panel showing reflection, serialization, and JNI hazards
-5. **Gutter Icons (Pro)** — Code editor with visual markers on affected classes and methods
-6. **Dry-Run Results (Pro)** — Validation report showing pass/fail status before obfuscation
-7. **Mapping Vault (Pro)** — Encrypted mapping file manager with diff and export options
-8. **Policy Engine (Business)** — Team-wide obfuscation policy configuration dashboard
+Vygenerované z reálného UI (`docs/screenshots/`, regenerace: `./gradlew test --tests "*ScreenshotGeneratorTest*" -PscreenshotsDir=$(pwd)/docs/screenshots`):
+
+1. **ProGuard editor s lintingem** — `docs/screenshots/pro-editor-linting.png`
+2. **Analýza rizik (tool window)** — `docs/screenshots/toolwindow-analysis.png`
+3. **Overview (tool window)** — `docs/screenshots/toolwindow-overview.png`
+
+> Upload na Marketplace: Plugin page → Edit → Media (manuálně přes web UI).
 
 ---
 
