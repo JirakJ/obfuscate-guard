@@ -208,6 +208,10 @@
     </actions>
 
     <change-notes><![CDATA[
+        <h3>2026.4.1</h3>
+        <ul>
+            <li><b>MAINTENANCE:</b> ProGuard parser now uses the public ASTWrapperPsiElement API instead of internal PSI implementation classes</li>
+        </ul>
         <h3>2026.4.0</h3>
         <ul>
             <li><b>NEW: Code completion in .pro files</b> - 50+ ProGuard/R8 directives with inline documentation</li>
