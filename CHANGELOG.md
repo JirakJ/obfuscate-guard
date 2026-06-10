@@ -1,5 +1,12 @@
 # ObfuscateGuard — Changelog
 
+## [2026.4.1] - 2026-06-10 🔧 Maintenance
+
+### Changed
+- `ProGuardParserDefinition.createElement` now returns the public
+  `ASTWrapperPsiElement` instead of constructing an internal-package
+  `LeafPsiElement`; removed the unused `PsiPlainTextFileImpl` import.
+
 ## [2026.4.0] - 2026-06-09 🚀 Feature Release
 
 ### Added
