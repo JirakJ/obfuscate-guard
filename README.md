@@ -1,5 +1,8 @@
 # ObfuscateGuard
 
+[![Version](https://img.shields.io/badge/version-2026.8.0-blue)](https://plugins.jetbrains.com/plugin/30234)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
+
 > JetBrains IntelliJ Platform plugin pro bezpečnou orchestraci obfuskace Java/Kotlin projektů.
 
 **ObfuscateGuard** není obfuskátor — je to **workflow, analýza a governance vrstva** nad existujícími obfuskátory (ProGuard/R8, yGuard, Allatori) přímo v IDE.
@@ -62,6 +65,14 @@ Dry-run validace (Tools → ObfuscateGuard → Dry-Run Validation) policy vynucu
 
 - Kotlin | IntelliJ Platform SDK | Gradle
 
+## Free & open source
+
+As of version 2026.8.0 this plugin is completely free — every feature is unlocked and no license is needed. The source code is available at https://github.com/JirakJ/obfuscate-guard under the Apache License 2.0.
+
+## Contributing
+
+Issues and pull requests are welcome — please open them on GitHub.
+
 ## License
 
-Proprietary — HTMETA.dev
+Copyright 2026 Jakub Jirák. Licensed under the [Apache License, Version 2.0](LICENSE).

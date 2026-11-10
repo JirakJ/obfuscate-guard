@@ -32,7 +32,7 @@
 
 ### ✨ Key Features
 
-#### 🆓 Free Tier
+All features are free for everyone — no license needed.
 
 - 🧙 **Configuration Wizard** — Set up obfuscation without studying 40-page manuals
 - 🔎 **Project Detection** — Automatic detection of your obfuscation tool and setup
@@ -40,8 +40,6 @@
 - 🪟 **Tool Window** — Dedicated ObfuscateGuard panel for orchestration
 - 🎨 **Smart .pro Editor** — Syntax highlighting, code completion, and quick documentation (Ctrl+Q) for 50+ ProGuard/R8 directives
 - 🧹 **Config Linter** — Unknown directives with typo suggestions, dangerous options, and duplicates flagged in the editor
-
-#### ⭐ Pro Tier — €89/year
 
 - 🛡️ **Safe-mode Analyzer** — Automatic detection of risks (reflection, serialization, JNI, DI) and keep rule generation
 - ⚠️ **Inline Inspections** — Real-time code inspections for obfuscation hazards
@@ -53,19 +51,13 @@
 - 🔒 **Mapping Vault** — Persistent storage, diff, and export of mapping files
 - 📤 **CI/CD Export** — Generate headless obfuscation configs and CI pipeline templates
 
-#### 🏢 Business Tier — €279/year
-
 - 📋 **Policy Engine** — Team-wide rules in a VCS-shared `obfuscateguard-policy.json`, enforced by dry-run validation
 
 ---
 
-### 💰 Pricing Model
+### 💚 Free & open source
 
-| Tier         | Price         | Highlights                                        |
-|--------------|---------------|---------------------------------------------------|
-| **Free**     | €0            | Wizard, project detection, run config, syntax      |
-| **Pro**      | €89/year      | Risk analyzer, dry-run, mapping vault, CI/CD       |
-| **Business** | €279/year     | Policy engine, audit trail, shared profiles        |
+ObfuscateGuard is completely free and open source under the Apache License 2.0: https://github.com/JirakJ/obfuscate-guard
 
 ---
 
@@ -155,12 +147,8 @@ Vygenerované z reálného UI (`docs/screenshots/`, regenerace: `./gradlew test 
 - [ ] Screenshots (1280×800 minimum) captured for all key features
 - [ ] Short description within 255-character limit
 - [ ] Full description reviewed and proofread
-- [ ] Pricing tiers configured in JetBrains Marketplace portal (EUR)
-- [ ] Product descriptor code `POBFUSCATEGUARD` verified
 - [ ] Plugin signed with JetBrains Marketplace certificate
-- [ ] License agreement (EULA) uploaded
 - [ ] CHANGELOG.md up to date with latest version notes
 - [ ] Compatibility tested on minimum build (232)
-- [ ] Free / Pro / Business feature gating verified
 - [ ] ProGuard/R8/yGuard/Allatori integration tested
 - [ ] Support email monitored and responsive
