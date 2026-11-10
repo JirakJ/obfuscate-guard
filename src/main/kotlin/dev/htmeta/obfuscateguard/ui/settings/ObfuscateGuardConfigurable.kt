@@ -21,7 +21,7 @@ class ObfuscateGuardConfigurable : BoundConfigurable("ObfuscateGuard") {
             row {
                 checkBox("Auto-analyze on project open")
                     .bindSelected(settings::autoAnalyzeOnOpen)
-                    .comment("Automatically scan for obfuscation risks when a project is opened (Pro feature)")
+                    .comment("Automatically scan for obfuscation risks when a project is opened")
             }
         }
 
