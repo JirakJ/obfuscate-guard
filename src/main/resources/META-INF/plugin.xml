@@ -202,6 +202,7 @@
     </actions>
 
     <change-notes><![CDATA[
+      <h3>2026.9.0</h3><ul><li>Run configuration output is attached to the Run console; missing configuration is reported properly.</li><li>Config linter offsets are correct with CRLF line endings; inline inspection respects the enable setting.</li><li>JNI risk rule detects Kotlin external fun declarations.</li><li>Wizard offers only implemented engines (ProGuard/R8) and pre-selects the default level.</li><li>Removed settings that had no effect and the unused mapping-vault service.</li></ul>
       <h3>2026.8.0</h3><ul><li>The plugin is now completely free — all features unlocked, no license needed.</li><li>Source code is now open source under Apache-2.0: https://github.com/JirakJ/obfuscate-guard</li></ul>
 
         <h3>2026.4.1</h3>
