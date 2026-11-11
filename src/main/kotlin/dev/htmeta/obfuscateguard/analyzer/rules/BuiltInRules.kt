@@ -15,7 +15,7 @@ class ReflectionUsageRule : AnalyzerRule {
     override val category = RiskCategory.REFLECTION
     override val displayName = "Reflection Usage"
 
-    private val patterns = listOf(
+    internal val patterns = listOf(
         PatternDef("Class\\.forName\\s*\\(", "Class.forName() — class name will change after obfuscation", RiskSeverity.CRITICAL),
         PatternDef("\\.getDeclaredMethod\\s*\\(", "getDeclaredMethod() — method name will change", RiskSeverity.CRITICAL),
         PatternDef("\\.getDeclaredField\\s*\\(", "getDeclaredField() — field name will change", RiskSeverity.CRITICAL),
@@ -26,7 +26,7 @@ class ReflectionUsageRule : AnalyzerRule {
     )
 
     override fun analyze(project: Project, file: VirtualFile, content: String): List<RiskItem> =
-        analyzeWithPatterns(file, content, patterns, category)
+        analyzeWithPatterns(file.path, file.nameWithoutExtension, content, patterns, category)
 }
 
 class SerializationRule : AnalyzerRule {
@@ -34,7 +34,7 @@ class SerializationRule : AnalyzerRule {
     override val category = RiskCategory.SERIALIZATION
     override val displayName = "Serialization Patterns"
 
-    private val patterns = listOf(
+    internal val patterns = listOf(
         PatternDef("@SerializedName", "@SerializedName — Gson field name mapping", RiskSeverity.CRITICAL),
         PatternDef("@JsonProperty", "@JsonProperty — Jackson field name mapping", RiskSeverity.CRITICAL),
         PatternDef("@XmlElement|@XmlAttribute", "XML serialization annotation", RiskSeverity.CRITICAL),
@@ -45,7 +45,7 @@ class SerializationRule : AnalyzerRule {
     )
 
     override fun analyze(project: Project, file: VirtualFile, content: String): List<RiskItem> =
-        analyzeWithPatterns(file, content, patterns, category)
+        analyzeWithPatterns(file.path, file.nameWithoutExtension, content, patterns, category)
 }
 
 class JniRule : AnalyzerRule {
@@ -53,14 +53,15 @@ class JniRule : AnalyzerRule {
     override val category = RiskCategory.JNI
     override val displayName = "JNI / Native Methods"
 
-    private val patterns = listOf(
+    internal val patterns = listOf(
         PatternDef("\\bnative\\s+\\w+\\s+\\w+\\s*\\(", "Native method — JNI binding uses exact method name", RiskSeverity.CRITICAL),
+        PatternDef("\\bexternal\\s+fun\\s+\\w+", "Kotlin external function — JNI binding uses exact name", RiskSeverity.CRITICAL),
         PatternDef("System\\.loadLibrary\\s*\\(", "System.loadLibrary() — native library loading", RiskSeverity.WARNING),
         PatternDef("System\\.load\\s*\\(", "System.load() — native library loading", RiskSeverity.WARNING),
     )
 
     override fun analyze(project: Project, file: VirtualFile, content: String): List<RiskItem> =
-        analyzeWithPatterns(file, content, patterns, category)
+        analyzeWithPatterns(file.path, file.nameWithoutExtension, content, patterns, category)
 }
 
 class DiFrameworkRule : AnalyzerRule {
@@ -68,7 +69,7 @@ class DiFrameworkRule : AnalyzerRule {
     override val category = RiskCategory.DI_FRAMEWORK
     override val displayName = "DI Framework Usage"
 
-    private val patterns = listOf(
+    internal val patterns = listOf(
         PatternDef("@Component|@Service|@Repository|@Controller", "Spring component — discovered by class name", RiskSeverity.CRITICAL),
         PatternDef("@Autowired|@Value\\(", "Spring injection — field/constructor name matters", RiskSeverity.WARNING),
         PatternDef("@Inject|@Named", "Dagger/Hilt/Guice injection", RiskSeverity.CRITICAL),
@@ -78,7 +79,7 @@ class DiFrameworkRule : AnalyzerRule {
     )
 
     override fun analyze(project: Project, file: VirtualFile, content: String): List<RiskItem> =
-        analyzeWithPatterns(file, content, patterns, category)
+        analyzeWithPatterns(file.path, file.nameWithoutExtension, content, patterns, category)
 }
 
 class DynamicLoadingRule : AnalyzerRule {
@@ -86,7 +87,7 @@ class DynamicLoadingRule : AnalyzerRule {
     override val category = RiskCategory.DYNAMIC_LOADING
     override val displayName = "Dynamic Class Loading"
 
-    private val patterns = listOf(
+    internal val patterns = listOf(
         PatternDef("ClassLoader\\.loadClass\\s*\\(", "ClassLoader.loadClass() — class name used at runtime", RiskSeverity.CRITICAL),
         PatternDef("ServiceLoader\\.load\\s*\\(", "ServiceLoader.load() — META-INF/services uses class names", RiskSeverity.CRITICAL),
         PatternDef("Thread\\.currentThread\\(\\)\\.contextClassLoader", "Context ClassLoader usage", RiskSeverity.INFO),
@@ -94,31 +95,36 @@ class DynamicLoadingRule : AnalyzerRule {
     )
 
     override fun analyze(project: Project, file: VirtualFile, content: String): List<RiskItem> =
-        analyzeWithPatterns(file, content, patterns, category)
+        analyzeWithPatterns(file.path, file.nameWithoutExtension, content, patterns, category)
 }
 
 // -- Shared utilities --
 
 internal data class PatternDef(val regex: String, val description: String, val severity: RiskSeverity)
 
+/**
+ * Line-by-line scan of [content] with [patterns]. The risk's class is the file's primary
+ * class (`package.Class`), or [fallbackName] when no class declaration is found.
+ */
 internal fun analyzeWithPatterns(
-    file: VirtualFile,
+    filePath: String,
+    fallbackName: String,
     content: String,
     patterns: List<PatternDef>,
     category: RiskCategory,
 ): List<RiskItem> {
     val results = mutableListOf<RiskItem>()
     val lines = content.lines()
+    val className = extractClassName(content) ?: fallbackName
 
     for (patternDef in patterns) {
         val regex = Regex(patternDef.regex)
         lines.forEachIndexed { index, line ->
             if (regex.containsMatchIn(line)) {
-                val className = extractClassName(file, content) ?: file.nameWithoutExtension
                 results.add(
                     RiskItem(
                         id = UUID.randomUUID().toString(),
-                        filePath = file.path,
+                        filePath = filePath,
                         lineNumber = index + 1,
                         className = className,
                         category = category,
@@ -133,7 +139,7 @@ internal fun analyzeWithPatterns(
     return results
 }
 
-private fun extractClassName(file: VirtualFile, content: String): String? {
+private fun extractClassName(content: String): String? {
     val packagePattern = Regex("""^package\s+([\w.]+)""", RegexOption.MULTILINE)
     val classPattern = Regex("""(?:class|interface|object|enum\s+class)\s+(\w+)""")
     val pkg = packagePattern.find(content)?.groupValues?.get(1) ?: ""

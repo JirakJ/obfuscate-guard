@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.psi.PsiElement
+import dev.htmeta.obfuscateguard.util.LineOffsets
 import com.intellij.psi.PsiFile
 
 /**
@@ -72,46 +73,25 @@ class ObfuscationRiskLineMarkerProvider : LineMarkerProvider {
         if (!settings.enabled || !settings.showGutterIcons) return
 
         val text = file.text
-        val lines = text.lines()
-        val processedLines = mutableSetOf<Int>()
-
-        for ((lineIndex, line) in lines.withIndex()) {
-            if (lineIndex in processedLines) continue
-
-            for (marker in markers) {
-                if (marker.regex.containsMatchIn(line)) {
-                    val offset = lineOffset(text, lineIndex)
-                    val element = file.findElementAt(offset) ?: continue
-
-                    if (element in elements) {
-                        val icon = if (marker.critical) AllIcons.General.Warning else AllIcons.General.Information
-                        val tooltipText = marker.tooltip
-                        result.add(
-                            LineMarkerInfo(
-                                element,
-                                element.textRange,
-                                icon,
-                                { tooltipText },
-                                null,
-                                GutterIconRenderer.Alignment.LEFT,
-                                { tooltipText },
-                            )
-                        )
-                        processedLines.add(lineIndex)
-                        break
-                    }
-                }
-            }
+        val offsets = LineOffsets(text)
+        text.lines().forEachIndexed { lineIndex, line ->
+            val marker = markers.firstOrNull { it.regex.containsMatchIn(line) } ?: return@forEachIndexed
+            val element = file.findElementAt(offsets.firstNonBlank(lineIndex))
+            if (element != null && element in elements) result.add(markerInfo(element, marker))
         }
     }
 
-    private fun lineOffset(text: String, lineIndex: Int): Int {
-        var offset = 0
-        for (i in 0 until lineIndex) {
-            offset = text.indexOf('\n', offset) + 1
-            if (offset == 0) return text.length - 1
-        }
-        while (offset < text.length && text[offset] == ' ') offset++
-        return offset.coerceAtMost(text.length - 1)
+    private fun markerInfo(element: PsiElement, marker: RiskMarker): LineMarkerInfo<PsiElement> {
+        val icon = if (marker.critical) AllIcons.General.Warning else AllIcons.General.Information
+        val tooltipText = marker.tooltip
+        return LineMarkerInfo(
+            element,
+            element.textRange,
+            icon,
+            { tooltipText },
+            null,
+            GutterIconRenderer.Alignment.LEFT,
+            { tooltipText },
+        )
     }
 }

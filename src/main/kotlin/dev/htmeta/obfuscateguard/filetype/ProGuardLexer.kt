@@ -106,7 +106,13 @@ class ProGuardLexer : Lexer() {
 
     private fun isClassPattern(from: Int): Boolean {
         var i = from
-        while (i < endOffset && (buffer[i].isLetterOrDigit() || buffer[i] == '.' || buffer[i] == '$' || buffer[i] == '_' || buffer[i] == '*')) i++
+        while (i < endOffset && isClassPatternChar(buffer[i])) i++
         return (i - from) > 3 && buffer.subSequence(from, i).contains('.')
+    }
+
+    private fun isClassPatternChar(c: Char): Boolean = c.isLetterOrDigit() || c in CLASS_PATTERN_SYMBOLS
+
+    private companion object {
+        const val CLASS_PATTERN_SYMBOLS = ".\$_*"
     }
 }
