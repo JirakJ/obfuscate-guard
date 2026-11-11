@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [2026.9.0] - 2026-11-11
+
 ### Fixed
 - Run configuration: the process output is now attached to the Run console (it stayed empty before); missing configuration is reported as a proper execution error.
 - Config linter: issue offsets are correct in files with Windows (CRLF) line endings.
