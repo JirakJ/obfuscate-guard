@@ -1,5 +1,6 @@
 package dev.htmeta.obfuscateguard.config
 
+import com.intellij.execution.ExecutionException
 import com.intellij.execution.Executor
 import com.intellij.execution.configurations.*
 import com.intellij.execution.process.OSProcessHandler
@@ -44,21 +45,21 @@ class ObfuscateRunConfiguration(
             val engineConfig = service.generateConfig()
 
             if (config == null || engineConfig == null) {
-                throw RuntimeException("No obfuscation configuration. Run the wizard first.")
+                throw ExecutionException("No obfuscation configuration. Run the wizard first.")
             }
 
             val adapter = ObfuscationEngineAdapter.findAdapter(config.engine)
-                ?: throw RuntimeException("Engine adapter not found: ${config.engine}")
+                ?: throw ExecutionException("Engine adapter not found: ${config.engine}")
 
             val command = adapter.buildRunCommand(project, engineConfig)
             val commandLine = GeneralCommandLine(command)
                 .withWorkDirectory(project.basePath)
 
             val handler = ProcessHandlerFactory.getInstance().createProcessHandler(commandLine)
-            com.intellij.execution.DefaultExecutionResult(
-                com.intellij.execution.impl.ConsoleViewImpl(project, false),
-                handler,
-            )
+            // Without attaching, the run console stays empty and the build output is lost.
+            val console = com.intellij.execution.impl.ConsoleViewImpl(project, false)
+            console.attachToProcess(handler)
+            com.intellij.execution.DefaultExecutionResult(console, handler)
         }
     }
 }
@@ -73,6 +74,7 @@ class ObfuscateRunSettingsEditor : SettingsEditor<ObfuscateRunConfiguration>() {
         }
     }
 
-    override fun applyEditorTo(s: ObfuscateRunConfiguration) {}
-    override fun resetEditorFrom(s: ObfuscateRunConfiguration) {}
+    // The run configuration has no options of its own; everything comes from the project config.
+    override fun applyEditorTo(s: ObfuscateRunConfiguration) = Unit
+    override fun resetEditorFrom(s: ObfuscateRunConfiguration) = Unit
 }

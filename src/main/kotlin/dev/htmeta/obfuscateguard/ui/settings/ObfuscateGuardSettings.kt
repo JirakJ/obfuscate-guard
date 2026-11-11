@@ -13,12 +13,9 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 class ObfuscateGuardSettings : PersistentStateComponent<ObfuscateGuardSettings> {
 
     var enabled: Boolean = true
-    var autoDetectProject: Boolean = true
-    var defaultEngine: String = "PROGUARD"
+    /** Level pre-selected in the configuration wizard (an [dev.htmeta.obfuscateguard.core.model.ObfuscationLevel] name). */
     var defaultLevel: String = "STANDARD"
     var showGutterIcons: Boolean = true
-    var autoAnalyzeOnOpen: Boolean = false
-    var mappingRetentionCount: Int = 20
 
     override fun getState(): ObfuscateGuardSettings = this
 

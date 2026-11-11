@@ -1,6 +1,5 @@
 package dev.htmeta.obfuscateguard.engine.proguard
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import dev.htmeta.obfuscateguard.core.model.*
@@ -41,26 +40,35 @@ class ProGuardAdapter : ObfuscationEngineAdapter {
         sb.appendLine("# Level: ${config.level.displayName}")
         sb.appendLine("# Goals: ${config.goals.joinToString { it.displayName }}")
         sb.appendLine()
+        appendLevel(sb, config.level)
+        sb.appendLine()
+        if (ProtectionGoal.STRING_PROTECTION in config.goals) {
+            sb.appendLine("# String protection (requires R8 full mode or ProGuard plugin)")
+            sb.appendLine("# -adaptresourcefilecontents **.properties,META-INF/MANIFEST.MF")
+        }
+        sb.appendLine()
+        appendProjectTypeRules(sb, profile.projectType)
+        sb.appendLine()
+        appendKeepRules(sb, config.keepRules)
+        appendSafeDefaults(sb)
+        return EngineSpecificConfig(
+            engineType = EngineType.PROGUARD,
+            configContent = sb.toString(),
+            configFilePath = "proguard-rules.pro",
+        )
+    }
 
-        // Base settings per level
-        when (config.level) {
+    private fun appendLevel(sb: StringBuilder, level: ObfuscationLevel) {
+        when (level) {
             ObfuscationLevel.LIGHT -> {
                 sb.appendLine("-keeppackagenames")
-                sb.appendLine("-keepattributes SourceFile,LineNumberTable")
-                sb.appendLine("-keepattributes *Annotation*")
-                sb.appendLine("-keepattributes Signature")
-                sb.appendLine("-keepattributes InnerClasses")
-                sb.appendLine("-keepattributes Exceptions")
+                KEEP_ATTRIBUTES_FULL.forEach { sb.appendLine(it) }
                 sb.appendLine()
-                sb.appendLine("# Light mode: keep all class names, only rename packages")
+                sb.appendLine("# Light mode: shrink and optimize only — package, class and member names are kept")
                 sb.appendLine("-keepnames class ** { *; }")
             }
             ObfuscationLevel.STANDARD -> {
-                sb.appendLine("-keepattributes SourceFile,LineNumberTable")
-                sb.appendLine("-keepattributes *Annotation*")
-                sb.appendLine("-keepattributes Signature")
-                sb.appendLine("-keepattributes InnerClasses")
-                sb.appendLine("-keepattributes Exceptions")
+                KEEP_ATTRIBUTES_FULL.forEach { sb.appendLine(it) }
                 sb.appendLine()
                 sb.appendLine("-optimizationpasses 1")
             }
@@ -74,26 +82,13 @@ class ProGuardAdapter : ObfuscationEngineAdapter {
                 sb.appendLine("-overloadaggressively")
             }
         }
+    }
 
-        sb.appendLine()
-
-        // Protection goals
-        if (ProtectionGoal.STRING_PROTECTION in config.goals) {
-            sb.appendLine("# String protection (requires R8 full mode or ProGuard plugin)")
-            sb.appendLine("# -adaptresourcefilecontents **.properties,META-INF/MANIFEST.MF")
-        }
-
-        sb.appendLine()
-
-        // Project-type specific rules
-        when (profile.projectType) {
+    private fun appendProjectTypeRules(sb: StringBuilder, projectType: ProjectType) {
+        when (projectType) {
             ProjectType.ANDROID_APP, ProjectType.ANDROID_LIBRARY -> {
                 sb.appendLine("# Android defaults")
-                sb.appendLine("-keep public class * extends android.app.Activity { *; }")
-                sb.appendLine("-keep public class * extends android.app.Application { *; }")
-                sb.appendLine("-keep public class * extends android.app.Service { *; }")
-                sb.appendLine("-keep public class * extends android.content.BroadcastReceiver { *; }")
-                sb.appendLine("-keep public class * extends android.content.ContentProvider { *; }")
+                ANDROID_COMPONENTS.forEach { sb.appendLine("-keep public class * extends $it { *; }") }
                 sb.appendLine("-keep class **.R { *; }")
                 sb.appendLine("-keep class **.R\$* { *; }")
                 sb.appendLine("-keepclassmembers class * implements android.os.Parcelable { *; }")
@@ -107,21 +102,19 @@ class ProGuardAdapter : ObfuscationEngineAdapter {
                 sb.appendLine("-keep public class * { public static void main(java.lang.String[]); }")
             }
         }
+    }
 
-        sb.appendLine()
-
-        // Keep rules from config
-        if (config.keepRules.isNotEmpty()) {
-            sb.appendLine("# Custom keep rules")
-            config.keepRules.filter { it.accepted }.forEach { rule ->
-                if (rule.reason.isNotBlank()) {
-                    sb.appendLine("# ${rule.reason}")
-                }
-                sb.appendLine(rule.toProGuardRule())
-            }
+    private fun appendKeepRules(sb: StringBuilder, keepRules: List<KeepRule>) {
+        val accepted = keepRules.filter { it.accepted }
+        if (accepted.isEmpty()) return
+        sb.appendLine("# Custom keep rules")
+        accepted.forEach { rule ->
+            if (rule.reason.isNotBlank()) sb.appendLine("# ${rule.reason}")
+            sb.appendLine(rule.toProGuardRule())
         }
+    }
 
-        // Common safe-defaults
+    private fun appendSafeDefaults(sb: StringBuilder) {
         sb.appendLine()
         sb.appendLine("# Safe defaults — prevent common breakages")
         sb.appendLine("-keepclassmembers class * { @com.google.gson.annotations.SerializedName <fields>; }")
@@ -132,47 +125,38 @@ class ProGuardAdapter : ObfuscationEngineAdapter {
         sb.appendLine("-dontwarn javax.**")
         sb.appendLine("-dontwarn kotlin.**")
         sb.appendLine("-dontwarn kotlinx.**")
-
-        return EngineSpecificConfig(
-            engineType = EngineType.PROGUARD,
-            configContent = sb.toString(),
-            configFilePath = "proguard-rules.pro",
-        )
     }
 
     override fun parseMapping(mappingContent: String): List<MappingEntry> {
         val entries = mutableListOf<MappingEntry>()
-        var currentClass: String? = null
-        var currentObfuscatedClass: String? = null
-
-        for (line in mappingContent.lines()) {
-            if (line.isBlank() || line.startsWith("#")) continue
-
-            if (!line.startsWith(" ") && line.contains(" -> ") && line.endsWith(":")) {
-                val parts = line.removeSuffix(":").split(" -> ")
-                if (parts.size == 2) {
-                    currentClass = parts[0].trim()
-                    currentObfuscatedClass = parts[1].trim()
-                    entries.add(MappingEntry(currentClass, currentObfuscatedClass, MappingEntryType.CLASS))
-                }
-            } else if (line.startsWith(" ") && line.contains(" -> ") && currentClass != null) {
-                val trimmed = line.trim()
-                val parts = trimmed.split(" -> ")
-                if (parts.size == 2) {
-                    // Method lines carry optional line-range prefixes: "12:34:void run() -> a"
-                    val original = LINE_RANGE_PREFIX.replace(parts[0].trim(), "")
-                    val obfuscated = parts[1].trim()
-                    val type = if (original.contains("(")) MappingEntryType.METHOD else MappingEntryType.FIELD
-                    // Obfuscated members live in the obfuscated class — qualify accordingly,
-                    // so stack-trace lookups by "obfClass.obfMember" can resolve them.
-                    entries.add(
-                        MappingEntry("$currentClass.$original", "$currentObfuscatedClass.$obfuscated", type)
-                    )
-                }
+        var currentClass: MappingEntry? = null
+        val relevant = mappingContent.lines().filter { !it.startsWith("#") && it.contains(" -> ") }
+        for (line in relevant) {
+            val isClassLine = !line.startsWith(" ") && line.endsWith(":")
+            if (isClassLine) {
+                currentClass = parseClassLine(line)?.also { entries += it }
+            } else if (line.startsWith(" ")) {
+                currentClass?.let { cls -> parseMemberLine(line, cls) }?.let { entries += it }
             }
         }
-
         return entries
+    }
+
+    private fun parseClassLine(line: String): MappingEntry? {
+        val parts = line.removeSuffix(":").split(" -> ")
+        if (parts.size != 2) return null
+        return MappingEntry(parts[0].trim(), parts[1].trim(), MappingEntryType.CLASS)
+    }
+
+    /** Member lines carry optional line-range prefixes: "12:34:void run() -> a". */
+    private fun parseMemberLine(line: String, cls: MappingEntry): MappingEntry? {
+        val parts = line.trim().split(" -> ")
+        if (parts.size != 2) return null
+        val original = LINE_RANGE_PREFIX.replace(parts[0].trim(), "")
+        val type = if (original.contains("(")) MappingEntryType.METHOD else MappingEntryType.FIELD
+        // Obfuscated members live in the obfuscated class — qualify accordingly,
+        // so stack-trace lookups by "obfClass.obfMember" can resolve them.
+        return MappingEntry("${cls.originalName}.$original", "${cls.obfuscatedName}.${parts[1].trim()}", type)
     }
 
     override fun buildRunCommand(project: Project, config: EngineSpecificConfig): List<String> {
@@ -184,7 +168,20 @@ class ProGuardAdapter : ObfuscationEngineAdapter {
     }
 
     companion object {
-        private val LOG = Logger.getInstance(ProGuardAdapter::class.java)
+        private val KEEP_ATTRIBUTES_FULL = listOf(
+            "-keepattributes SourceFile,LineNumberTable",
+            "-keepattributes *Annotation*",
+            "-keepattributes Signature",
+            "-keepattributes InnerClasses",
+            "-keepattributes Exceptions",
+        )
+        private val ANDROID_COMPONENTS = listOf(
+            "android.app.Activity",
+            "android.app.Application",
+            "android.app.Service",
+            "android.content.BroadcastReceiver",
+            "android.content.ContentProvider",
+        )
         private val LINE_RANGE_PREFIX = Regex("""^\d+:\d+:""")
     }
 }

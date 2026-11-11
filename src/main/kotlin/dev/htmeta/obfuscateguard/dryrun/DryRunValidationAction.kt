@@ -39,94 +39,29 @@ class DryRunValidationAction : AnAction() {
                 indicator.isIndeterminate = false
                 indicator.text = "Analyzing project for obfuscation risks..."
                 indicator.fraction = 0.1
-
                 val risks = service.analyzeRisks()
-                indicator.fraction = 0.4
-
-                indicator.text = "Checking keep rules coverage..."
-                val keepPatterns = config.keepRules.filter { it.accepted }.map { it.pattern }
-                val uncoveredRisks = risks.filter { risk ->
-                    val className = risk.className
-                    keepPatterns.none { pattern -> pattern.contains(className) }
-                }
-                indicator.fraction = 0.6
 
                 indicator.text = "Validating engine configuration..."
-                val engineConfig = service.generateConfig()
-                val configIssues = mutableListOf<String>()
-                if (engineConfig == null) {
-                    configIssues.add("Cannot generate engine configuration")
-                } else {
-                    if (engineConfig.configContent.isBlank()) {
-                        configIssues.add("Generated config is empty")
-                    }
-                    if (!engineConfig.configContent.contains("-keep")) {
-                        configIssues.add("No keep rules in generated config")
-                    }
-                }
-                indicator.fraction = 0.8
-
-                val criticalRisks = uncoveredRisks.count { it.severity == RiskSeverity.CRITICAL }
-                val warningRisks = uncoveredRisks.count { it.severity == RiskSeverity.WARNING }
-                val coveredCount = risks.size - uncoveredRisks.size
+                indicator.fraction = 0.5
+                val configContent = service.generateConfig()?.configContent
 
                 indicator.text = "Checking team policy..."
-                val policy = project.basePath?.let { PolicyEngine.loadPolicy(it) }
-                val policyViolations = if (policy != null && engineConfig != null) {
-                    PolicyEngine.validate(policy, config, engineConfig.configContent, criticalRisks)
-                } else {
-                    emptyList()
+                indicator.fraction = 0.8
+                val critical = DryRunReport.uncoveredRisks(risks, config.keepRules).count { it.severity == RiskSeverity.CRITICAL }
+                val policyViolations = project.basePath?.let { PolicyEngine.loadPolicy(it) }?.let { policy ->
+                    configContent?.let { PolicyEngine.validate(policy, config, it, critical) } ?: emptyList()
                 }
 
-                val sb = StringBuilder()
-                sb.appendLine("Dry-Run Validation Report")
-                sb.appendLine("Engine: ${config.engine.displayName} | Level: ${config.level.displayName} | Keep rules: ${config.keepRules.size}")
-                sb.appendLine()
-                sb.appendLine("Risks: ${risks.size} total, $coveredCount covered, ${uncoveredRisks.size} uncovered ($criticalRisks critical, $warningRisks warnings)")
-
-                if (configIssues.isNotEmpty()) {
-                    sb.appendLine("Config issues: ${configIssues.joinToString("; ")}")
-                }
-
-                if (policy != null) {
-                    sb.appendLine()
-                    sb.appendLine(
-                        if (policyViolations.isEmpty()) "Team policy: compliant"
-                        else "Team policy: ${policyViolations.size} violation(s)"
-                    )
-                    policyViolations.forEach { sb.appendLine("  ✖ [${it.rule}] ${it.message}") }
-                }
-
-                if (uncoveredRisks.isNotEmpty()) {
-                    sb.appendLine()
-                    sb.appendLine("Top uncovered risks:")
-                    uncoveredRisks.take(10).forEach { risk ->
-                        sb.appendLine("  ${risk.severity.icon} ${risk.className}:${risk.lineNumber} - ${risk.description}")
-                    }
-                }
-
-                val verdict = when {
-                    policyViolations.isNotEmpty() -> "FAIL - ${policyViolations.size} team policy violation(s)"
-                    criticalRisks > 0 -> "FAIL - $criticalRisks critical risks without keep rules"
-                    warningRisks > 3 -> "WARN - $warningRisks uncovered warnings"
-                    configIssues.isNotEmpty() -> "WARN - Configuration issues detected"
-                    else -> "PASS - All risks covered. Safe to run obfuscation."
-                }
-                sb.appendLine()
-                sb.appendLine("Verdict: $verdict")
-
+                val result = DryRunReport.build(config, risks, configContent, policyViolations)
                 indicator.fraction = 1.0
-
-                val notificationType = when {
-                    policyViolations.isNotEmpty() -> NotificationType.ERROR
-                    criticalRisks > 0 -> NotificationType.ERROR
-                    warningRisks > 3 || configIssues.isNotEmpty() -> NotificationType.WARNING
-                    else -> NotificationType.INFORMATION
+                val notificationType = when (result.outcome) {
+                    DryRunOutcome.FAIL -> NotificationType.ERROR
+                    DryRunOutcome.WARN -> NotificationType.WARNING
+                    DryRunOutcome.PASS -> NotificationType.INFORMATION
                 }
-
                 NotificationGroupManager.getInstance()
                     .getNotificationGroup("ObfuscateGuard")
-                    .createNotification("ObfuscateGuard Dry Run", sb.toString(), notificationType)
+                    .createNotification("ObfuscateGuard Dry Run", result.report, notificationType)
                     .notify(project)
             }
         })

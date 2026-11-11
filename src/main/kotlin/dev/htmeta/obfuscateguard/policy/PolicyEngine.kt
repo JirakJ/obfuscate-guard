@@ -113,7 +113,8 @@ object PolicyEngine {
             violations.add(
                 PolicyViolation(
                     rule = "maxUncoveredCriticalRisks",
-                    message = "$uncoveredCriticalRisks critical risks without keep rules exceed the allowed ${policy.maxUncoveredCriticalRisks}.",
+                    message = "$uncoveredCriticalRisks critical risks without keep rules exceed " +
+                        "the allowed ${policy.maxUncoveredCriticalRisks}.",
                 )
             )
         }

@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
+import dev.htmeta.obfuscateguard.util.LineOffsets
 
 /**
  * IntelliJ inspection that detects obfuscation risks inline in the editor.
@@ -66,16 +67,20 @@ class ObfuscationRiskInspection : LocalInspectionTool() {
             override fun visitFile(file: PsiFile) {
                 val ext = file.virtualFile?.extension ?: return
                 if (ext !in setOf("java", "kt", "kts")) return
+                if (!dev.htmeta.obfuscateguard.ui.settings.ObfuscateGuardSettings.getInstance().enabled) return
 
                 val text = file.text
                 val lines = text.lines()
+                val offsets = LineOffsets(text)
 
                 for (pattern in patterns) {
                     for ((lineIndex, line) in lines.withIndex()) {
-                        if (pattern.regex.containsMatchIn(line)) {
-                            val offset = lineOffset(text, lineIndex)
-                            val element = file.findElementAt(offset) ?: continue
-
+                        val element = if (pattern.regex.containsMatchIn(line)) {
+                            file.findElementAt(offsets.firstNonBlank(lineIndex))
+                        } else {
+                            null
+                        }
+                        if (element != null) {
                             holder.registerProblem(
                                 element,
                                 "ObfuscateGuard: ${pattern.message}",
@@ -87,16 +92,6 @@ class ObfuscationRiskInspection : LocalInspectionTool() {
                 }
             }
         }
-    }
-
-    private fun lineOffset(text: String, lineIndex: Int): Int {
-        var offset = 0
-        for (i in 0 until lineIndex) {
-            offset = text.indexOf('\n', offset) + 1
-            if (offset == 0) return text.length - 1
-        }
-        while (offset < text.length && text[offset] == ' ') offset++
-        return offset.coerceAtMost(text.length - 1)
     }
 }
 

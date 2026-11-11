@@ -5,7 +5,7 @@
 
 > JetBrains IntelliJ Platform plugin pro bezpečnou orchestraci obfuskace Java/Kotlin projektů.
 
-**ObfuscateGuard** není obfuskátor — je to **workflow, analýza a governance vrstva** nad existujícími obfuskátory (ProGuard/R8, yGuard, Allatori) přímo v IDE.
+**ObfuscateGuard** není obfuskátor — je to **workflow, analýza a governance vrstva** nad ProGuard/R8 přímo v IDE.
 
 ## Klíčové funkce
 
@@ -16,7 +16,6 @@
 - **Export Keep Rules** — zápis vygenerovaných pravidel do `proguard-rules.pro` se zachováním ručně psaného obsahu
 - **Dry-run Validation** — ověření, že obfuskace nerozbije aplikaci, včetně vynucení týmové policy
 - **Stack Trace Deobfuscator** — retrace crash logů včetně R8 line-range mappingů, auto-detekce mapping souboru
-- **Mapping Vault** — perzistentní úložiště mapping souborů s diffem a metadaty buildů
 - **CI/CD Export** — šablony pro GitHub Actions, GitLab CI a Jenkins
 - **Policy Engine** — týmová pravidla v `obfuscateguard-policy.json` sdílená přes VCS
 
@@ -47,19 +46,13 @@ Dry-run validace (Tools → ObfuscateGuard → Dry-Run Validation) policy vynucu
 ## Vývoj
 
 ```bash
-./gradlew test            # unit + platform testy
+./gradlew detekt test     # statická analýza + unit/platform testy
 ./gradlew buildPlugin     # distribuce do build/distributions
 ./gradlew runIde          # sandbox IDE s pluginem
 
 # regenerace screenshotů z reálného UI
 ./gradlew test --tests "*ScreenshotGeneratorTest*" -PscreenshotsDir=$(pwd)/docs/screenshots
 ```
-
-## Dokumentace
-
-- [Business Requirements (BRS)](docs/BRS.md)
-- [Software Requirements (SRS)](docs/SRS.md)
-- [Implementation Plan](docs/PLAN.md)
 
 ## Tech Stack
 

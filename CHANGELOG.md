@@ -1,5 +1,19 @@
 # ObfuscateGuard — Changelog
 
+## [Unreleased]
+
+### Fixed
+- Run configuration: the process output is now attached to the Run console (it stayed empty before); missing configuration is reported as a proper execution error.
+- Config linter: issue offsets are correct in files with Windows (CRLF) line endings.
+- Inline inspection now respects the "Enable ObfuscateGuard" setting, like the gutter icons.
+- JNI risk rule also detects Kotlin `external fun` declarations.
+- Light level comment in generated configs describes what it actually does (shrink/optimize only, names kept).
+- The wizard only offers engines that are implemented (ProGuard/R8); the default level from Settings is pre-selected.
+
+### Removed
+- Settings that had no effect (auto-detect, default engine, auto-analyze on open, mapping retention) and the unused mapping-vault service; the description no longer advertises yGuard/Allatori support or a mapping vault.
+- Internal business documents (revenue projections, product spec) from `docs/`.
+
 ## [2026.8.0] - 2026-11-10
 
 ### Changed
