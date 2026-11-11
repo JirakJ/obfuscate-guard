@@ -19,7 +19,9 @@ class ObfuscationWizardDialog(private val project: Project) : DialogWrapper(proj
     private val profile = service.detectProject()
 
     private var selectedEngine = EngineType.PROGUARD
-    private var selectedLevel = ObfuscationLevel.STANDARD
+    private var selectedLevel = ObfuscationLevel.entries
+        .firstOrNull { it.name == dev.htmeta.obfuscateguard.ui.settings.ObfuscateGuardSettings.getInstance().defaultLevel }
+        ?: ObfuscationLevel.STANDARD
     private val selectedGoals = mutableSetOf(ProtectionGoal.IP_PROTECTION)
 
     private var currentStep = 0
@@ -114,7 +116,8 @@ class ObfuscationWizardDialog(private val project: Project) : DialogWrapper(proj
     private fun createEngineStep(): JComponent = panel {
         group("Step 2: Engine Selection") {
             buttonsGroup {
-                for (engine in EngineType.entries) {
+                // Only engines with a registered adapter can generate a configuration and run.
+                for (engine in EngineType.entries.filter { ObfuscationEngineAdapter.findAdapter(it) != null }) {
                     row {
                         radioButton(engine.displayName, engine)
                             .comment(

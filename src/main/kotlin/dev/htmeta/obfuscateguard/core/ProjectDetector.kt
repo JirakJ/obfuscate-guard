@@ -40,31 +40,14 @@ class ProjectDetector {
         baseDir: com.intellij.openapi.vfs.VirtualFile,
         buildSystem: BuildSystem,
     ): ProjectType {
-        if (buildSystem == BuildSystem.GRADLE) {
-            val buildFile = baseDir.findChild("build.gradle.kts") ?: baseDir.findChild("build.gradle")
-            val content = buildFile?.let { readFileSafe(it) } ?: ""
-
-            return when {
-                content.contains("com.android.application") -> ProjectType.ANDROID_APP
-                content.contains("com.android.library") -> ProjectType.ANDROID_LIBRARY
-                content.contains("org.jetbrains.intellij") -> ProjectType.PLUGIN
-                content.contains("application") && content.contains("mainClass") -> ProjectType.APP
-                content.contains("java-library") || content.contains("kotlin(\"jvm\")") -> ProjectType.LIBRARY
-                else -> ProjectType.APP
+        return when (buildSystem) {
+            BuildSystem.GRADLE -> {
+                val buildFile = baseDir.findChild("build.gradle.kts") ?: baseDir.findChild("build.gradle")
+                gradleProjectType(buildFile?.let { readFileSafe(it) }.orEmpty())
             }
+            BuildSystem.MAVEN -> mavenProjectType(baseDir.findChild("pom.xml")?.let { readFileSafe(it) }.orEmpty())
+            else -> ProjectType.UNKNOWN
         }
-
-        if (buildSystem == BuildSystem.MAVEN) {
-            val pomFile = baseDir.findChild("pom.xml")
-            val content = pomFile?.let { readFileSafe(it) } ?: ""
-            return when {
-                content.contains("<packaging>war</packaging>") -> ProjectType.APP
-                content.contains("<packaging>pom</packaging>") -> ProjectType.LIBRARY
-                else -> ProjectType.APP
-            }
-        }
-
-        return ProjectType.UNKNOWN
     }
 
     private fun detectModules(
@@ -103,5 +86,19 @@ class ProjectDetector {
 
     companion object {
         private val LOG = Logger.getInstance(ProjectDetector::class.java)
+
+        /** Project type from a Gradle build script. */
+        fun gradleProjectType(content: String): ProjectType = when {
+            content.contains("com.android.application") -> ProjectType.ANDROID_APP
+            content.contains("com.android.library") -> ProjectType.ANDROID_LIBRARY
+            content.contains("org.jetbrains.intellij") -> ProjectType.PLUGIN
+            content.contains("application") && content.contains("mainClass") -> ProjectType.APP
+            content.contains("java-library") || content.contains("kotlin(\"jvm\")") -> ProjectType.LIBRARY
+            else -> ProjectType.APP
+        }
+
+        /** Project type from a Maven POM (`pom` packaging = aggregator/library, otherwise an application). */
+        fun mavenProjectType(content: String): ProjectType =
+            if (content.contains("<packaging>pom</packaging>")) ProjectType.LIBRARY else ProjectType.APP
     }
 }

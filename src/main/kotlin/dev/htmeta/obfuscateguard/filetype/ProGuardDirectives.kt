@@ -30,10 +30,26 @@ object ProGuardDirectives {
         Directive("-forceprocessing", "", "Process the input even if the output is up to date."),
 
         // Keep rules
-        Directive("-keep", "[,modifier,...] class_specification", "Keep classes and class members from being removed or renamed. The most important directive."),
-        Directive("-keepclassmembers", "[,modifier,...] class_specification", "Keep class members from being removed or renamed, if their classes are kept."),
-        Directive("-keepclasseswithmembers", "[,modifier,...] class_specification", "Keep classes and their members, on condition that all specified members are present."),
-        Directive("-keepnames", "class_specification", "Keep names of classes and members if they are not removed by shrinking (= -keep,allowshrinking)."),
+        Directive(
+            "-keep",
+            "[,modifier,...] class_specification",
+            "Keep classes and class members from being removed or renamed. The most important directive.",
+        ),
+        Directive(
+            "-keepclassmembers",
+            "[,modifier,...] class_specification",
+            "Keep class members from being removed or renamed, if their classes are kept.",
+        ),
+        Directive(
+            "-keepclasseswithmembers",
+            "[,modifier,...] class_specification",
+            "Keep classes and their members, on condition that all specified members are present.",
+        ),
+        Directive(
+            "-keepnames",
+            "class_specification",
+            "Keep names of classes and members if they are not removed by shrinking (= -keep,allowshrinking).",
+        ),
         Directive("-keepclassmembernames", "class_specification", "Keep names of class members if they are not removed by shrinking."),
         Directive("-keepclasseswithmembernames", "class_specification", "Keep names of classes with all specified members present."),
         Directive("-if", "class_specification", "Conditional -keep: apply the following keep rule only if the specified classes exist."),
@@ -46,15 +62,31 @@ object ProGuardDirectives {
 
         // Optimization
         Directive("-dontoptimize", "", "Disable bytecode optimization."),
-        Directive("-optimizations", "optimization_filter", "Enable or disable specific optimizations (e.g. !code/simplification/arithmetic)."),
+        Directive(
+            "-optimizations",
+            "optimization_filter",
+            "Enable or disable specific optimizations (e.g. !code/simplification/arithmetic).",
+        ),
         Directive("-optimizationpasses", "n", "Number of optimization passes (default 1)."),
-        Directive("-assumenosideeffects", "class_specification", "Assume the specified methods have no side effects — calls may be removed (use with care, typically for logging).", dangerous = true, dangerReason = "Removes method calls entirely; wrong specifications silently break behavior."),
+        Directive(
+            "-assumenosideeffects",
+            "class_specification",
+            "Assume the specified methods have no side effects — calls may be removed (use with care, typically for logging).",
+            dangerous = true,
+            dangerReason = "Removes method calls entirely; wrong specifications silently break behavior.",
+        ),
         Directive("-assumevalues", "class_specification", "Assume fixed values or ranges for fields and methods."),
         Directive("-allowaccessmodification", "", "Allow widening access modifiers during optimization for better results."),
         Directive("-mergeinterfacesaggressively", "", "Allow merging interfaces, even if classes don't implement them."),
 
         // Obfuscation
-        Directive("-dontobfuscate", "", "Disable obfuscation — names are kept readable.", dangerous = true, dangerReason = "Disables the core protection. Remove it before a production release."),
+        Directive(
+            "-dontobfuscate",
+            "",
+            "Disable obfuscation — names are kept readable.",
+            dangerous = true,
+            dangerReason = "Disables the core protection. Remove it before a production release.",
+        ),
         Directive("-printmapping", "[filename]", "Write the old name -> new name mapping to a file. Required for crash deobfuscation."),
         Directive("-applymapping", "filename", "Reuse a mapping from a previous build for incremental obfuscation."),
         Directive("-obfuscationdictionary", "filename", "Use words from the given file as obfuscated field and method names."),
@@ -66,11 +98,19 @@ object ProGuardDirectives {
         Directive("-keeppackagenames", "[package_filter]", "Keep the specified package names from being obfuscated."),
         Directive("-flattenpackagehierarchy", "[package_name]", "Repackage all packages into the given parent package."),
         Directive("-repackageclasses", "[package_name]", "Repackage all class files into the given single package."),
-        Directive("-keepattributes", "[attribute_filter]", "Keep the specified attributes (Signature, SourceFile, LineNumberTable, *Annotation*, ...)."),
+        Directive(
+            "-keepattributes",
+            "[attribute_filter]",
+            "Keep the specified attributes (Signature, SourceFile, LineNumberTable, *Annotation*, ...).",
+        ),
         Directive("-keepparameternames", "", "Keep parameter names and types of kept methods."),
         Directive("-renamesourcefileattribute", "[string]", "Set the SourceFile attribute to the given constant string."),
         Directive("-adaptclassstrings", "[class_filter]", "Adapt string constants that correspond to obfuscated class names."),
-        Directive("-adaptresourcefilenames", "[file_filter]", "Rename resource files based on the obfuscated names of corresponding classes."),
+        Directive(
+            "-adaptresourcefilenames",
+            "[file_filter]",
+            "Rename resource files based on the obfuscated names of corresponding classes.",
+        ),
         Directive("-adaptresourcefilecontents", "[file_filter]", "Update contents of resource files with obfuscated class names."),
 
         // Preverification
@@ -81,8 +121,20 @@ object ProGuardDirectives {
         // Warnings and notes
         Directive("-verbose", "", "Write more information during processing."),
         Directive("-dontnote", "[class_filter]", "Suppress notes about potential configuration issues."),
-        Directive("-dontwarn", "[class_filter]", "Suppress warnings about unresolved references.", dangerous = true, dangerReason = "Broad filters (e.g. -dontwarn **) can hide real missing-class problems that crash at runtime."),
-        Directive("-ignorewarnings", "", "Continue processing despite warnings.", dangerous = true, dangerReason = "Warnings usually indicate classes that will be missing at runtime."),
+        Directive(
+            "-dontwarn",
+            "[class_filter]",
+            "Suppress warnings about unresolved references.",
+            dangerous = true,
+            dangerReason = "Broad filters (e.g. -dontwarn **) can hide real missing-class problems that crash at runtime.",
+        ),
+        Directive(
+            "-ignorewarnings",
+            "",
+            "Continue processing despite warnings.",
+            dangerous = true,
+            dangerReason = "Warnings usually indicate classes that will be missing at runtime.",
+        ),
 
         // Output diagnostics
         Directive("-printconfiguration", "[filename]", "Print the whole resolved configuration."),

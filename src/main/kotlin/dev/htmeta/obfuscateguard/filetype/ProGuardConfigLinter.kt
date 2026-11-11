@@ -21,66 +21,45 @@ object ProGuardConfigLinter {
 
     fun lint(content: String): List<LintIssue> {
         val issues = mutableListOf<LintIssue>()
-        var offset = 0
         val seenSingletonDirectives = mutableMapOf<String, Int>()
-
-        content.lines().forEachIndexed { index, line ->
-            val trimmed = line.trimStart()
-            val indent = line.length - trimmed.length
-            val match = DIRECTIVE_AT_LINE_START.find(trimmed)
-
-            if (match != null && indent == 0) {
-                val name = match.groupValues[1]
-                val start = offset + indent
-                val end = start + name.length
-
-                val directive = ProGuardDirectives.find(name)
-                when {
-                    directive == null -> {
-                        val suggestion = ProGuardDirectives.closestMatch(name)
-                        val hint = if (suggestion != null) " Did you mean '$suggestion'?" else ""
-                        issues.add(
-                            LintIssue(start, end, index + 1, IssueSeverity.ERROR, "Unknown directive '$name'.$hint")
-                        )
-                    }
-                    directive.dangerous -> {
-                        val argument = trimmed.removePrefix(name).trim()
-                        val isBroadDontwarn = name == "-dontwarn" && (argument.isEmpty() || argument == "**" || argument == "*")
-                        val severity = if (name == "-dontwarn" && !isBroadDontwarn) {
-                            // Targeted -dontwarn for a specific package is normal practice
-                            null
-                        } else {
-                            IssueSeverity.WARNING
-                        }
-                        if (severity != null) {
-                            issues.add(
-                                LintIssue(start, end, index + 1, severity, "${directive.dangerReason} (${directive.name})")
-                            )
-                        }
-                    }
-                    else -> {
-                        // Flag duplicates of directives that only make sense once
-                        if (name in SINGLETON_DIRECTIVES) {
-                            val firstLine = seenSingletonDirectives[name]
-                            if (firstLine != null) {
-                                issues.add(
-                                    LintIssue(
-                                        start, end, index + 1, IssueSeverity.WEAK_WARNING,
-                                        "Duplicate directive '$name' (already specified on line $firstLine)."
-                                    )
-                                )
-                            } else {
-                                seenSingletonDirectives[name] = index + 1
-                            }
-                        }
-                    }
-                }
-            }
-
+        var offset = 0
+        // Split on '\n' only so offsets stay correct for CRLF files ('\r' stays part of the line).
+        content.split('\n').forEachIndexed { index, line ->
+            lintLine(line, offset, index + 1, seenSingletonDirectives)?.let { issues += it }
             offset += line.length + 1
         }
-
         return issues
+    }
+
+    private fun lintLine(line: String, lineOffset: Int, lineNumber: Int, seen: MutableMap<String, Int>): LintIssue? {
+        val name = DIRECTIVE_AT_LINE_START.find(line)?.groupValues?.get(1) ?: return null
+        val start = lineOffset
+        val end = start + name.length
+        val directive = ProGuardDirectives.find(name)
+        return when {
+            directive == null -> {
+                val hint = ProGuardDirectives.closestMatch(name)?.let { " Did you mean '$it'?" }.orEmpty()
+                LintIssue(start, end, lineNumber, IssueSeverity.ERROR, "Unknown directive '$name'.$hint")
+            }
+            directive.dangerous -> {
+                // A targeted -dontwarn for a specific package is normal practice; only broad ones are flagged.
+                val argument = line.removePrefix(name).trim()
+                val targetedDontwarn = name == "-dontwarn" && argument.isNotEmpty() && argument != "**" && argument != "*"
+                if (targetedDontwarn) {
+                    null
+                } else {
+                    LintIssue(start, end, lineNumber, IssueSeverity.WARNING, "${directive.dangerReason} (${directive.name})")
+                }
+            }
+            name in SINGLETON_DIRECTIVES -> {
+                val firstLine = seen.putIfAbsent(name, lineNumber)
+                firstLine?.let {
+                    val message = "Duplicate directive '$name' (already specified on line $it)."
+                    LintIssue(start, end, lineNumber, IssueSeverity.WEAK_WARNING, message)
+                }
+            }
+            else -> null
+        }
     }
 
     /** Checks useful for release readiness, not tied to a specific line. */

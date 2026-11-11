@@ -7,8 +7,8 @@
 
 <p>
   ObfuscateGuard is a workflow, analysis, and governance layer for Java/Kotlin obfuscation.
-  It works on top of ProGuard/R8, yGuard, and Allatori — helping you set up, validate, and
-  manage obfuscation directly inside your IDE.
+  It works on top of ProGuard/R8 — helping you set up, validate, and manage obfuscation
+  directly inside your IDE.
 </p>
 
 <h3>Setup and Configuration</h3>
@@ -16,7 +16,7 @@
   <li><b>Configuration Wizard</b> — Guided setup with auto-detection of build system and project type</li>
   <li><b>Smart .pro Editor</b> — Syntax highlighting, code completion, and quick documentation for 50+ ProGuard/R8 directives</li>
   <li><b>Config Linter</b> — Detects unknown directives (with typo suggestions), dangerous options, and duplicates right in the editor</li>
-  <li><b>Run Configuration</b> — Execute obfuscation with real-time log streaming and progress tracking</li>
+  <li><b>Run Configuration</b> — Runs the R8 minify task with its output streamed to the Run console</li>
 </ul>
 
 <h3>Risk Analysis</h3>
@@ -30,7 +30,6 @@
 <h3>Mapping and Debugging</h3>
 <ul>
   <li><b>Stack Trace Deobfuscator</b> — Paste obfuscated crash logs, get original class and method names (R8 line ranges supported, mapping file auto-detected)</li>
-  <li><b>Mapping Vault</b> — Persistent local storage with diff viewer and build metadata for crash symbolication</li>
   <li><b>Keep Rules Generator</b> — Automatic keep rules with one-click export into proguard-rules.pro that preserves hand-written content</li>
 </ul>
 
@@ -42,7 +41,7 @@
 
 <h3>Requirements</h3>
 <ul>
-  <li>IntelliJ IDEA 2024.1+ or compatible JetBrains IDE</li>
+  <li>IntelliJ IDEA 2023.2+ or compatible JetBrains IDE</li>
   <li>Java or Kotlin project with Gradle or Maven</li>
 </ul>
 

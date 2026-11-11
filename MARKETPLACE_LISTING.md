@@ -16,7 +16,7 @@
 
 ## 🎯 Short Description
 
-> Workflow, analysis, and governance layer for Java/Kotlin obfuscation — configuration wizard, risk analyzer, dry-run validation, and mapping vault for ProGuard, R8, and Allatori. (179 chars)
+> Workflow, analysis, and governance layer for Java/Kotlin obfuscation — configuration wizard, risk analyzer, dry-run validation and stack-trace retrace for ProGuard/R8.
 
 ---
 
@@ -26,7 +26,7 @@
 
 **The Problem:** Obfuscation tools like ProGuard and R8 are powerful but treacherous. Misconfiguration breaks reflection, serialization, JNI, and dependency injection. Teams waste hours debugging obfuscation issues and studying 40-page manuals.
 
-**The Solution:** ObfuscateGuard isn't an obfuscator — it's a **workflow, analysis, and governance layer** over your existing obfuscation tools (ProGuard/R8, yGuard, Allatori). It guides configuration, detects risks before they break your build, and manages mapping files for crash symbolication.
+**The Solution:** ObfuscateGuard isn't an obfuscator — it's a **workflow, analysis, and governance layer** over ProGuard/R8. It guides configuration, detects risks before they break your build, and retraces obfuscated stack traces.
 
 ---
 
@@ -48,7 +48,6 @@ All features are free for everyone — no license needed.
 - 🧪 **Dry-Run Validation** — Verify obfuscation won't break your application before running
 - 🗺️ **Stack Trace Deobfuscator** — Translate obfuscated crash logs back to readable code (R8 line ranges, auto-detected mapping)
 - 📏 **Keep Rules Generator** — Keep rules from risk analysis with one-click export into proguard-rules.pro
-- 🔒 **Mapping Vault** — Persistent storage, diff, and export of mapping files
 - 📤 **CI/CD Export** — Generate headless obfuscation configs and CI pipeline templates
 
 - 📋 **Policy Engine** — Team-wide rules in a VCS-shared `obfuscateguard-policy.json`, enforced by dry-run validation
@@ -114,7 +113,7 @@ Vygenerované z reálného UI (`docs/screenshots/`, regenerace: `./gradlew test 
 
 ## 🔍 Keywords (SEO)
 
-`obfuscation`, `ProGuard`, `R8`, `code protection`, `Java obfuscation`, `Kotlin obfuscation`, `keep rules`, `mapping files`, `deobfuscation`, `stack trace`, `Android ProGuard`, `code security`, `yGuard`, `Allatori`, `obfuscation wizard`
+`obfuscation`, `ProGuard`, `R8`, `code protection`, `Java obfuscation`, `Kotlin obfuscation`, `keep rules`, `mapping files`, `deobfuscation`, `stack trace`, `Android ProGuard`, `code security`, `obfuscation wizard`
 
 ---
 
@@ -150,5 +149,5 @@ Vygenerované z reálného UI (`docs/screenshots/`, regenerace: `./gradlew test 
 - [ ] Plugin signed with JetBrains Marketplace certificate
 - [ ] CHANGELOG.md up to date with latest version notes
 - [ ] Compatibility tested on minimum build (232)
-- [ ] ProGuard/R8/yGuard/Allatori integration tested
+- [ ] ProGuard/R8 integration tested
 - [ ] Support email monitored and responsive
